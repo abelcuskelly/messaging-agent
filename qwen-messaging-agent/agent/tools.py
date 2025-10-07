@@ -1,0 +1,210 @@
+import json
+import datetime
+from typing import List, Dict, Any, Callable, Optional
+
+
+class ToolRegistry:
+    """Registry for agent tools."""
+
+    def __init__(self):
+        self.tools: Dict[str, Dict[str, Any]] = {}
+
+    def register(self, name: str, description: str, parameters: Dict):
+        def decorator(func: Callable[..., Any]):
+            self.tools[name] = {
+                "function": func,
+                "description": description,
+                "parameters": parameters,
+            }
+            return func
+        return decorator
+
+    def get_tool_definitions(self) -> List[Dict[str, Any]]:
+        definitions = []
+        for name, tool in self.tools.items():
+            definitions.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "description": tool["description"],
+                        "parameters": tool["parameters"],
+                    },
+                }
+            )
+        return definitions
+
+    def execute(self, name: str, arguments: Dict[str, Any]) -> Any:
+        if name not in self.tools:
+            raise ValueError(f"Tool {name} not found")
+        return self.tools[name]["function"](**arguments)
+
+
+registry = ToolRegistry()
+
+
+@registry.register(
+    name="send_message",
+    description="Send a message to a user",
+    parameters={
+        "type": "object",
+        "properties": {
+            "recipient": {"type": "string", "description": "Recipient identifier"},
+            "message": {"type": "string", "description": "Message content"},
+        },
+        "required": ["recipient", "message"],
+    },
+)
+def send_message(recipient: str, message: str) -> str:
+    # Placeholder - integrate with your messaging provider
+    return f"Message sent to {recipient}: {message}"
+
+
+@registry.register(
+    name="check_inventory",
+    description="Get available seats for an event",
+    parameters={
+        "type": "object",
+        "properties": {
+            "event_id": {"type": "string"},
+            "section": {"type": "string"},
+            "quantity": {"type": "integer", "minimum": 1},
+        },
+        "required": ["event_id", "quantity"],
+    },
+)
+def check_inventory(event_id: str, quantity: int, section: Optional[str] = None) -> Dict[str, Any]:
+    # TODO: Query your ticketing inventory
+    base_section = section or "A"
+    seats = [
+        {"id": f"{base_section}-{i}", "price": 120.0 + i * 5, "section": base_section, "row": str(5 + i)}
+        for i in range(1, quantity + 1)
+    ]
+    return {"event_id": event_id, "seats": seats}
+
+
+@registry.register(
+    name="hold_tickets",
+    description="Place a temporary hold on seats",
+    parameters={
+        "type": "object",
+        "properties": {
+            "event_id": {"type": "string"},
+            "seat_ids": {"type": "array", "items": {"type": "string"}},
+            "expires_in_seconds": {"type": "integer", "default": 300},
+        },
+        "required": ["event_id", "seat_ids"],
+    },
+)
+def hold_tickets(event_id: str, seat_ids: List[str], expires_in_seconds: int = 300) -> Dict[str, Any]:
+    # TODO: Create a real hold in your system
+    hold_id = f"HOLD_{int(datetime.datetime.utcnow().timestamp())}"
+    expires_at = (datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in_seconds)).isoformat() + "Z"
+    return {"hold_id": hold_id, "event_id": event_id, "seat_ids": seat_ids, "expires_at": expires_at}
+
+
+@registry.register(
+    name="create_order",
+    description="Create an order from a hold",
+    parameters={
+        "type": "object",
+        "properties": {
+            "hold_id": {"type": "string"},
+            "customer_id": {"type": "string"},
+            "payment_method_token": {"type": "string"},
+        },
+        "required": ["hold_id", "customer_id", "payment_method_token"],
+    },
+)
+def create_order(hold_id: str, customer_id: str, payment_method_token: str) -> Dict[str, Any]:
+    # TODO: Charge and create order in your OMS
+    order_id = f"ORD_{int(datetime.datetime.utcnow().timestamp())}"
+    return {"order_id": order_id, "status": "confirmed", "customer_id": customer_id, "hold_id": hold_id}
+
+
+@registry.register(
+    name="upgrade_tickets",
+    description="Upgrade existing tickets to better seats",
+    parameters={
+        "type": "object",
+        "properties": {
+            "order_id": {"type": "string"},
+            "target_section": {"type": "string"},
+            "max_price_delta": {"type": "number"},
+        },
+        "required": ["order_id"],
+    },
+)
+def upgrade_tickets(order_id: str, target_section: Optional[str] = None, max_price_delta: Optional[float] = None) -> Dict[str, Any]:
+    # TODO: Implement upgrade logic in your OMS/inventory
+    price_delta = 30.0 if max_price_delta is None else min(30.0, max_price_delta)
+    return {"order_id": order_id, "status": "upgraded", "price_delta": price_delta, "target_section": target_section}
+
+
+@registry.register(
+    name="release_hold",
+    description="Release a temporary hold",
+    parameters={
+        "type": "object",
+        "properties": {"hold_id": {"type": "string"}},
+        "required": ["hold_id"],
+    },
+)
+def release_hold(hold_id: str) -> Dict[str, Any]:
+    # TODO: Release hold in your system
+    return {"hold_id": hold_id, "released": True}
+
+
+@registry.register(
+    name="get_event_info",
+    description="Fetch metadata for an event",
+    parameters={
+        "type": "object",
+        "properties": {"event_id": {"type": "string"}},
+        "required": ["event_id"],
+    },
+)
+def get_event_info(event_id: str) -> Dict[str, Any]:
+    # TODO: Pull event details from your catalog
+    return {"event_id": event_id, "name": "Pro Sports Game", "start_time": "2025-10-07T19:00:00Z", "venue": "Main Arena"}
+
+
+class ToolCallingAgent:
+    def __init__(self, endpoint, tool_registry: ToolRegistry):
+        self.endpoint = endpoint
+        self.tools = tool_registry
+
+    def chat(self, user_message: str, conversation_history: List[Dict]) -> str:
+        messages = [
+            {
+                "role": "system",
+                "content": f"You have access to these tools: {json.dumps(self.tools.get_tool_definitions())}",
+            }
+        ]
+        messages.extend(conversation_history)
+        messages.append({"role": "user", "content": user_message})
+
+        response = self.endpoint.predict(instances=[{"messages": messages}])
+        assistant_message = response.predictions[0]["response"]
+
+        if "<tool_call>" in assistant_message:
+            tool_call = self._parse_tool_call(assistant_message)
+            tool_result = self.tools.execute(tool_call["name"], tool_call["arguments"])
+
+            messages.append({"role": "assistant", "content": assistant_message})
+            messages.append({"role": "tool", "content": str(tool_result)})
+
+            final = self.endpoint.predict(instances=[{"messages": messages}])
+            return final.predictions[0]["response"]
+
+        return assistant_message
+
+    def _parse_tool_call(self, message: str) -> Dict:
+        import re
+
+        match = re.search(r"<tool_call>(.*?)</tool_call>", message, re.DOTALL)
+        if match:
+            return json.loads(match.group(1))
+        return {"name": "", "arguments": {}}
+
+

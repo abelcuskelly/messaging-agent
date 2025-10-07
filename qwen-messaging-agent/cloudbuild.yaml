@@ -1,0 +1,24 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$_TAG"
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$_TAG"
+
+images:
+  - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$_TAG"
+
+substitutions:
+  _REGION: us-central1
+  _REPO: ml-training
+  _IMAGE: qwen-trainer
+  _TAG: latest
+
+options:
+  machineType: "E2_HIGHCPU_8"
+
