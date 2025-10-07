@@ -223,7 +223,7 @@ curl -X POST "$API_URL/chat" -H "Content-Type: application/json" -d '{"message":
 ```
 
 ### Model Source (Hugging Face)
-- Base model: [Qwen3-8B-Instruct on Hugging Face](https://huggingface.co/Qwen/Qwen3-8B-Instruct)
+- Base model: [Qwen3-VL-30B-A3B-Instruct on Hugging Face](https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct)
 - Ensure license compliance and check model card guidance before production use.
 
 ### Ticketing Tool Specifications (Proposed)
