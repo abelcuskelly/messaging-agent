@@ -20,7 +20,7 @@ import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="Qwen/Qwen3-8B-Instruct")
+    parser.add_argument("--model_name", type=str, default="Qwen/Qwen3-4B-Instruct-2507")
     parser.add_argument("--output_dir", type=str, default="/tmp/output")
     parser.add_argument("--bucket_name", type=str, required=True)
     parser.add_argument("--epochs", type=int, default=3)

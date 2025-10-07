@@ -166,7 +166,7 @@ ENDPOINT_ID=your-endpoint-id
 - Ensure messages follow the Qwen chat format; the script applies the tokenizer chat template.
 
 ### Model Sizing Guidance
-- Start with `Qwen/Qwen3-4B-Instruct` during development; move to `Qwen/Qwen3-8B-Instruct` for production quality.
+- Recommended default: `Qwen/Qwen3-4B-Instruct-2507` (text-only). Fast, strong alignment, fits on a single T4 with 4‑bit.
 - If GPU memory is tight, keep 4‑bit quantization, lower batch size, or shorten `max_seq_length`.
 
 ### CI/CD (Cloud Build Trigger)
@@ -223,7 +223,7 @@ curl -X POST "$API_URL/chat" -H "Content-Type: application/json" -d '{"message":
 ```
 
 ### Model Source (Hugging Face)
-- Base model: [Qwen3-VL-30B-A3B-Instruct on Hugging Face](https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct)
+- Base model: [Qwen3-4B-Instruct-2507 on Hugging Face](https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507)
 - Ensure license compliance and check model card guidance before production use.
 
 ### Ticketing Tool Specifications (Proposed)
