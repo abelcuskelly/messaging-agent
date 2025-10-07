@@ -208,6 +208,31 @@ endpoint.deploy(model=new_model, traffic_split={"0": 90, "1": 10})
 - Slow training: check Flash Attention install and consider V100/A100.
 - Container build failures: ensure base image compatibility and pinned deps in `requirements.txt`.
 
+### Next Steps
+- Build and submit training
+  - Set env vars; run `quick_start.py` to build/push image and start the Vertex AI job.
+  - Ensure Artifact Registry repo and GCS bucket exist; set WANDB or disable reporting.
+
+- Deploy and wire API
+  - After training, deploy model, get `ENDPOINT_ID`, set env in `api/`, deploy to Cloud Run.
+  - Smoke test `/chat` and add auth/rate-limits.
+
+- Implement ticketing backends
+  - Replace stubs in `agent/tools.py` with real APIs (inventory, holds, orders, upgrades), add retries, timeouts, auth, and idempotency keys.
+  - Add policy checks (refund/upgrade windows) and price confirmation prompts.
+
+- Observability and ops
+  - Enable Vertex Model Monitoring, BigQuery logging, error alerts.
+  - Add budgets/alerts; set endpoint autoscaling min/max; turn on Cloud Armor if public.
+
+- QA and rollout
+  - Expand tests for tool-calling paths and upgrades; run `load_test.py` against staging.
+  - Canary rollout new models; define rollback procedure.
+
+- Optional improvements
+  - RAG for team/event FAQs; index creation and retrieval path.
+  - HParam tuning; Pipelines for retraining; CI/CD triggers on main.
+
 ### Integrating into an Existing Codebase
 - Call the Vertex Endpoint directly:
 ```python
