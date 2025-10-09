@@ -147,13 +147,15 @@ ENDPOINT_ID=your-endpoint-id
 API_KEY=your-api-key  # Optional, for auth
 REDIS_URL=redis://localhost:6379  # Optional, for rate limiting
 RATE_LIMIT_PER_MINUTE=60  # Optional, default 60
+TRAINING_DATA_URI=gs://your-bucket/training-data  # For model monitoring
 ```
 
 ### Infra Requirements
-- Enable APIs: `aiplatform.googleapis.com`, `artifactregistry.googleapis.com`, `storage.googleapis.com`, `compute.googleapis.com`.
+- Enable APIs: `aiplatform.googleapis.com`, `artifactregistry.googleapis.com`, `storage.googleapis.com`, `compute.googleapis.com`, `bigquery.googleapis.com`, `monitoring.googleapis.com`.
 - Create Artifact Registry repo `ml-training` (Docker) in your region.
 - Create/stage Cloud Storage bucket `${PROJECT_ID}-vertex-ai-training`.
-- Service accounts need Vertex AI + Storage permissions.
+- Create BigQuery dataset `messaging_logs` for conversation logging.
+- Service accounts need Vertex AI + Storage + BigQuery + Monitoring permissions.
 
 ### GPU Notes
 - Start with 1× T4 for development; scale to V100/A100 for speed.
@@ -239,12 +241,55 @@ python load_test.py  # requires running API at localhost:8080
 ```
 
 ### Monitoring & Logging
-- Enable deployment monitoring:
+
+**Vertex Model Monitoring:**
+- **Drift Detection**: Monitors prediction drift and feature skew between training and serving data
+- **Sampling Strategy**: Configurable sampling rate (default 10% of requests)
+- **Alert Configuration**: Notification channels for monitoring alerts
+- **Dashboard Creation**: Automated Cloud Monitoring dashboard setup
+
+Enable monitoring:
 ```python
-from monitoring import enable_model_monitoring
-enable_model_monitoring(endpoint_name="projects/PROJECT/locations/REGION/endpoints/ENDPOINT")
+from monitoring import enable_model_monitoring, create_monitoring_dashboard
+
+# Enable model monitoring
+monitoring_job = enable_model_monitoring(
+    endpoint_name="projects/PROJECT/locations/REGION/endpoints/ENDPOINT",
+    sample_rate=0.1,  # 10% sampling
+    monitor_interval=3600  # Check every hour
+)
+
+# Create monitoring dashboard
+dashboard_url = create_monitoring_dashboard(
+    project_id="your-project-id",
+    endpoint_name="projects/PROJECT/locations/REGION/endpoints/ENDPOINT"
+)
 ```
-- Log interactions to BigQuery via `log_handler.ConversationLogger` (create dataset/table first).
+
+**BigQuery Logging:**
+- **Structured Logging**: All conversations automatically logged with metadata
+- **Auto Table Creation**: Creates partitioned BigQuery table automatically
+- **Performance Metrics**: Tracks duration, message/response lengths, success rates
+- **Error Logging**: Separate error logging with failure details
+- **Analytics Support**: Built-in conversation statistics queries
+- **Time Partitioning**: Daily partitions for efficient querying
+
+Features:
+- Automatic conversation logging on every API request
+- Request ID tracking for debugging
+- Graceful fallback if BigQuery unavailable
+- JSON metadata for flexible analysis
+- Conversation statistics and analytics
+
+Query conversation stats:
+```python
+from log_handler import ConversationLogger
+
+logger = ConversationLogger()
+stats = logger.get_conversation_stats(days=7)
+print(f"Success rate: {stats['success_rate']:.2%}")
+print(f"Avg duration: {stats['avg_duration_ms']:.0f}ms")
+```
 
 ### Rollout & Rollback
 - Deploy a new model version to the same endpoint with partial traffic to canary:
