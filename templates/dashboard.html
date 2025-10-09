@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Messaging Agent Analytics Dashboard</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>🎫 Qwen Messaging Agent Analytics</h1>
+        <p>Real-time insights into customer conversations and agent performance</p>
+        <div class="header-controls">
+            <div class="date-range-picker">
+                <label for="start-date">From:</label>
+                <input type="date" id="start-date" onchange="updateDateRange()">
+                <label for="end-date">To:</label>
+                <input type="date" id="end-date" onchange="updateDateRange()">
+            </div>
+            <div class="action-buttons">
+                <button class="refresh-btn" onclick="refreshDashboard()">🔄 Refresh</button>
+                <button class="export-btn" onclick="exportData('csv')">📊 Export CSV</button>
+                <button class="export-btn" onclick="exportData('pdf')">📄 Export PDF</button>
+                <button class="alerts-btn" onclick="toggleAlerts()">🚨 Alerts</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Panel -->
+    <div id="alerts-panel" class="alerts-panel" style="display: none;">
+        <h3>🚨 Active Alerts</h3>
+        <div id="alerts-content"></div>
+    </div>
+
+    <div id="loading" class="loading">
+        Loading dashboard data...
+    </div>
+
+    <div id="dashboard" style="display: none;">
+        <!-- Key Metrics -->
+        <div class="dashboard-grid">
+            <div class="metric-card">
+                <h3>Total Conversations</h3>
+                <div class="metric-value" id="total-conversations">-</div>
+                <div class="metric-label">Last 30 days</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Success Rate</h3>
+                <div class="metric-value" id="success-rate">-</div>
+                <div class="metric-label">Successful interactions</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Avg Response Time</h3>
+                <div class="metric-value" id="avg-duration">-</div>
+                <div class="metric-label">Milliseconds</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Customer Sentiment</h3>
+                <div class="metric-value" id="avg-sentiment">-</div>
+                <div class="metric-label">Overall satisfaction</div>
+            </div>
+        </div>
+
+        <!-- Conversation Flows Chart -->
+        <div class="chart-container">
+            <h2>Conversation Flow Distribution <button class="drill-down-btn" onclick="drillDown('conversations')">🔍 Drill Down</button></h2>
+            <div id="flow-chart"></div>
+        </div>
+
+        <!-- Sentiment Trends Chart -->
+        <div class="chart-container">
+            <h2>Daily Sentiment Trends <button class="drill-down-btn" onclick="drillDown('sentiment')">🔍 Drill Down</button></h2>
+            <div id="sentiment-chart"></div>
+        </div>
+
+        <!-- Daily Metrics Chart -->
+        <div class="chart-container">
+            <h2>Daily Conversation Metrics</h2>
+            <div id="daily-metrics-chart"></div>
+        </div>
+
+        <!-- Drill-down Modal -->
+        <div id="drill-down-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeDrillDown()">&times;</span>
+                <h2 id="drill-down-title">Drill-down Analysis</h2>
+                <div id="drill-down-content"></div>
+            </div>
+        </div>
+
+        <!-- Top Conversation Topics -->
+        <div class="table-container">
+            <h2>Top Conversation Topics</h2>
+            <table id="topics-table">
+                <thead>
+                    <tr>
+                        <th>User Message</th>
+                        <th>Agent Response</th>
+                        <th>Frequency</th>
+                    </tr>
+                </thead>
+                <tbody id="topics-tbody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="table-container">
+            <h2>Recent Activity</h2>
+            <table id="activity-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Conversations</th>
+                        <th>Success Rate</th>
+                        <th>Avg Duration</th>
+                        <th>Sentiment</th>
+                    </tr>
+                </thead>
+                <tbody id="activity-tbody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Generated at: <span id="generated-at">-</span></p>
+        <p>Qwen Messaging Agent Analytics Dashboard</p>
+    </div>
+
+    <script>
+        let dashboardData = null;
+        let websocket = null;
+        let currentStartDate = null;
+        let currentEndDate = null;
+
+        // Initialize WebSocket connection
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'dashboard_update') {
+                    dashboardData = data.data;
+                    renderDashboard();
+                }
+            };
+            
+            websocket.onclose = function() {
+                // Reconnect after 5 seconds
+                setTimeout(initWebSocket, 5000);
+            };
+        }
+
+        // Initialize date range picker
+        function initDateRange() {
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - 30);
+            
+            document.getElementById('end-date').value = endDate.toISOString().split('T')[0];
+            document.getElementById('start-date').value = startDate.toISOString().split('T')[0];
+            
+            currentStartDate = startDate.toISOString().split('T')[0];
+            currentEndDate = endDate.toISOString().split('T')[0];
+        }
+
+        async function loadDashboard() {
+            try {
+                const params = new URLSearchParams();
+                if (currentStartDate) params.append('start_date', currentStartDate);
+                if (currentEndDate) params.append('end_date', currentEndDate);
+                
+                const response = await fetch(`/api/dashboard?${params.toString()}`);
+                dashboardData = await response.json();
+                renderDashboard();
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('loading').innerHTML = 'Error loading dashboard data';
+            }
+        }
+
+        function renderDashboard() {
+            if (!dashboardData) return;
+
+            // Hide loading, show dashboard
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            // Update key metrics
+            const overall = dashboardData.business_metrics?.overall_metrics || {};
+            document.getElementById('total-conversations').textContent = overall.total_conversations || 0;
+            document.getElementById('success-rate').textContent = 
+                overall.success_rate ? (overall.success_rate * 100).toFixed(1) + '%' : '-';
+            document.getElementById('avg-duration').textContent = 
+                overall.avg_duration_ms ? Math.round(overall.avg_duration_ms) + 'ms' : '-';
+
+            // Calculate average sentiment
+            const sentimentData = dashboardData.sentiment_trends?.daily_sentiment || [];
+            const avgSentiment = sentimentData.length > 0 ? 
+                sentimentData.reduce((sum, day) => sum + day.avg_sentiment, 0) / sentimentData.length : 0;
+            document.getElementById('avg-sentiment').textContent = 
+                avgSentiment > 0 ? 'Positive' : avgSentiment < 0 ? 'Negative' : 'Neutral';
+
+            // Render charts
+            renderFlowChart();
+            renderSentimentChart();
+            renderDailyMetricsChart();
+            renderTopicsTable();
+            renderActivityTable();
+
+            // Update generated time
+            document.getElementById('generated-at').textContent = 
+                new Date(dashboardData.generated_at).toLocaleString();
+        }
+
+        function renderFlowChart() {
+            const flows = dashboardData.conversation_flows?.flows || [];
+            const data = [{
+                x: flows.map(f => f.flow_type),
+                y: flows.map(f => f.count),
+                type: 'bar',
+                marker: {
+                    color: ['#667eea', '#764ba2', '#f093fb', '#f5576c']
+                }
+            }];
+            
+            const layout = {
+                title: 'Conversation Flow Distribution',
+                xaxis: { title: 'Flow Type' },
+                yaxis: { title: 'Count' },
+                margin: { t: 50, r: 50, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('flow-chart', data, layout, {responsive: true});
+        }
+
+        function renderSentimentChart() {
+            const sentimentData = dashboardData.sentiment_trends?.daily_sentiment || [];
+            const data = [{
+                x: sentimentData.map(d => d.date),
+                y: sentimentData.map(d => d.avg_sentiment),
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#667eea', width: 3 },
+                marker: { size: 8 }
+            }];
+            
+            const layout = {
+                title: 'Daily Sentiment Trends',
+                xaxis: { title: 'Date' },
+                yaxis: { 
+                    title: 'Sentiment Score',
+                    range: [-1, 1]
+                },
+                margin: { t: 50, r: 50, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('sentiment-chart', data, layout, {responsive: true});
+        }
+
+        function renderDailyMetricsChart() {
+            const dailyMetrics = dashboardData.business_metrics?.daily_metrics || [];
+            const data = [
+                {
+                    x: dailyMetrics.map(d => d.date),
+                    y: dailyMetrics.map(d => total_conversations),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Total Conversations',
+                    line: { color: '#667eea' }
+                },
+                {
+                    x: dailyMetrics.map(d => d.date),
+                    y: dailyMetrics.map(d => d.successful_conversations),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Successful',
+                    line: { color: '#28a745' }
+                }
+            ];
+            
+            const layout = {
+                title: 'Daily Conversation Metrics',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Count' },
+                margin: { t: 50, r: 50, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('daily-metrics-chart', data, layout, {responsive: true});
+        }
+
+        function renderTopicsTable() {
+            const topics = dashboardData.topics?.topics || [];
+            const tbody = document.getElementById('topics-tbody');
+            tbody.innerHTML = '';
+
+            topics.slice(0, 10).forEach(topic => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = topic.user_message.substring(0, 50) + '...';
+                row.insertCell(1).textContent = topic.agent_response.substring(0, 50) + '...';
+                row.insertCell(2).textContent = topic.frequency;
+            });
+        }
+
+        function renderActivityTable() {
+            const dailyMetrics = dashboardData.business_metrics?.daily_metrics || [];
+            const tbody = document.getElementById('activity-tbody');
+            tbody.innerHTML = '';
+
+            dailyMetrics.slice(0, 10).forEach(day => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = new Date(day.date).toLocaleDateString();
+                row.insertCell(1).textContent = day.total_conversations;
+                row.insertCell(2).textContent = (day.success_rate * 100).toFixed(1) + '%';
+                row.insertCell(3).textContent = Math.round(day.avg_duration) + 'ms';
+                
+                const sentimentCell = row.insertCell(4);
+                const sentiment = day.avg_sentiment || 0;
+                sentimentCell.textContent = sentiment > 0 ? 'Positive' : sentiment < 0 ? 'Negative' : 'Neutral';
+                sentimentCell.className = 'status-badge ' + 
+                    (sentiment > 0 ? 'success' : sentiment < 0 ? 'error' : 'warning');
+            });
+        }
+
+        async function refreshDashboard() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.disabled = true;
+            btn.textContent = 'Refreshing...';
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            
+            await loadDashboard();
+            
+            btn.disabled = false;
+            btn.textContent = 'Refresh Data';
+        }
+
+        // New functions for enhanced features
+        function updateDateRange() {
+            currentStartDate = document.getElementById('start-date').value;
+            currentEndDate = document.getElementById('end-date').value;
+            loadDashboard();
+        }
+
+        async function exportData(format) {
+            try {
+                const params = new URLSearchParams();
+                if (currentStartDate) params.append('start_date', currentStartDate);
+                if (currentEndDate) params.append('end_date', currentEndDate);
+                
+                const response = await fetch(`/api/export/${format}?${params.toString()}`);
+                const blob = await response.blob();
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dashboard_export.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('Export failed. Please try again.');
+            }
+        }
+
+        async function toggleAlerts() {
+            const panel = document.getElementById('alerts-panel');
+            if (panel.style.display === 'none') {
+                try {
+                    const response = await fetch('/api/alerts');
+                    const data = await response.json();
+                    renderAlerts(data.alerts);
+                    panel.style.display = 'block';
+                } catch (error) {
+                    console.error('Failed to load alerts:', error);
+                }
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        function renderAlerts(alerts) {
+            const content = document.getElementById('alerts-content');
+            if (alerts.length === 0) {
+                content.innerHTML = '<p class="no-alerts">✅ No active alerts</p>';
+                return;
+            }
+
+            let html = '';
+            alerts.forEach(alert => {
+                html += `
+                    <div class="alert-item alert-${alert.type}">
+                        <strong>${alert.metric}:</strong> ${alert.message}
+                        <br><small>Current: ${alert.value} | Threshold: ${alert.threshold}</small>
+                    </div>
+                `;
+            });
+            content.innerHTML = html;
+        }
+
+        async function drillDown(metric) {
+            try {
+                const params = new URLSearchParams();
+                if (currentStartDate) params.append('start_date', currentStartDate);
+                if (currentEndDate) params.append('end_date', currentEndDate);
+                
+                const response = await fetch(`/api/drill-down/${metric}?${params.toString()}`);
+                const data = await response.json();
+                
+                const modal = document.getElementById('drill-down-modal');
+                const title = document.getElementById('drill-down-title');
+                const content = document.getElementById('drill-down-content');
+                
+                title.textContent = `${data.metric} Breakdown`;
+                
+                let html = '<div class="drill-down-chart">';
+                if (data.breakdown) {
+                    data.breakdown.forEach(item => {
+                        const percentage = item.percentage ? ` (${(item.percentage * 100).toFixed(1)}%)` : '';
+                        html += `
+                            <div class="breakdown-item">
+                                <span class="category">${item.category}</span>
+                                <span class="value">${item.count}${percentage}</span>
+                            </div>
+                        `;
+                    });
+                }
+                html += '</div>';
+                
+                content.innerHTML = html;
+                modal.style.display = 'block';
+            } catch (error) {
+                console.error('Drill-down failed:', error);
+            }
+        }
+
+        function closeDrillDown() {
+            document.getElementById('drill-down-modal').style.display = 'none';
+        }
+
+        // Load dashboard on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initDateRange();
+            initWebSocket();
+            loadDashboard();
+        });
+
+        // Auto-refresh every 5 minutes
+        setInterval(loadDashboard, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
