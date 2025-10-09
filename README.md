@@ -74,6 +74,23 @@ python deploy_to_vertex.py
 # Then set ENDPOINT_ID from the printed endpoint in your API env
 ```
 
+### Custom Prediction Container (Optional, Better Performance)
+Build & push the inference image:
+```bash
+cd inference
+export PROJECT_ID=your-project-id REGION=us-central1
+export INFER_IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/ml-training/qwen-infer:latest"
+gcloud builds submit --tag ${INFER_IMAGE_URI}
+```
+
+Deploy with custom container:
+```bash
+export PROJECT_ID=your-project-id REGION=us-central1 BUCKET_NAME=${PROJECT_ID}-vertex-ai-training
+export INFER_IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/ml-training/qwen-infer:latest"
+export MODEL_ARTIFACT_URI="gs://${BUCKET_NAME}/qwen-messaging-agent/models/merged"
+python deploy_inference.py
+```
+
 ### API (Cloud Run)
 Minimal proxy to Vertex Endpoint in `api/`.
 ```bash
