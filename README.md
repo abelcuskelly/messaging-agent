@@ -517,6 +517,61 @@ TEAMS_BOT_PASSWORD=your-teams-bot-password
 - `POST /teams/events` - Handle Teams events
 - `GET /integrations/status` - Get integration status
 
+### Enhanced Analytics Dashboard
+
+**Features:**
+- **Real-time WebSocket Updates**: Live data streaming with automatic reconnection
+- **Export Functionality**: CSV and PDF export with date range filtering
+- **Date Range Picker**: Custom time period selection for data analysis
+- **Drill-down Capabilities**: Interactive detailed breakdowns for metrics
+- **Alert Thresholds**: Configurable alerts for key performance indicators
+- **User Authentication**: Secure access with HTTP Basic authentication
+- **Custom Branding**: Professional styling with company colors and responsive design
+
+**Dashboard Capabilities:**
+- **Key Metrics Cards**: Total conversations, success rate, response time, sentiment
+- **Interactive Charts**: Conversation flows, sentiment trends, daily metrics
+- **Data Tables**: Top conversation topics, recent activity breakdown
+- **Real-time Updates**: WebSocket connection for live data streaming
+- **Export Options**: Download data as CSV or generate professional PDF reports
+- **Drill-down Analysis**: Click charts to explore detailed breakdowns
+- **Alert System**: Visual alerts when metrics exceed thresholds
+- **Date Filtering**: Analyze data for custom time periods
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+
+**Authentication:**
+- Username: `admin`
+- Password: `qwen2024`
+
+**Dashboard Access:**
+```bash
+# Start the enhanced dashboard server
+python3 simple_dashboard.py --port 8080
+
+# Access dashboard at: http://127.0.0.1:8080
+```
+
+**API Endpoints:**
+- `GET /` - Main dashboard (requires authentication)
+- `GET /api/dashboard` - Complete dashboard data with date filtering
+- `GET /api/export/csv` - Export data as CSV file
+- `GET /api/export/pdf` - Generate PDF report
+- `GET /api/drill-down/{metric}` - Get detailed metric breakdowns
+- `GET /api/alerts` - Get current alert status
+- `WebSocket /ws` - Real-time data updates
+- `GET /health` - Health check endpoint
+
+**Alert Thresholds:**
+- Success Rate: Below 85% triggers warning
+- Response Time: Above 5000ms triggers warning  
+- Customer Sentiment: Below 0.3 triggers danger alert
+
+**Export Features:**
+- **CSV Export**: Raw data with all metrics and date ranges
+- **PDF Export**: Professional reports with charts, metrics, and alerts
+- **Date Range Support**: Export data for custom time periods
+- **Custom Branding**: Company colors and professional styling in PDFs
+
 ### RAG (Retrieval Augmented Generation)
 
 **Features:**
