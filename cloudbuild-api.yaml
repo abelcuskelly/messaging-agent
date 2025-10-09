@@ -1,0 +1,59 @@
+# Cloud Build configuration for API deployment
+steps:
+  # Build API container
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - "gcr.io/$PROJECT_ID/qwen-api:$BUILD_ID"
+      - api/
+    id: 'build-api'
+
+  # Push API container
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - "gcr.io/$PROJECT_ID/qwen-api:$BUILD_ID"
+    id: 'push-api'
+    waitFor: ['build-api']
+
+  # Deploy to Cloud Run
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - qwen-messaging-api
+      - --image
+      - "gcr.io/$PROJECT_ID/qwen-api:$BUILD_ID"
+      - --platform
+      - managed
+      - --region
+      - us-central1
+      - --allow-unauthenticated
+      - --memory
+      - 2Gi
+      - --cpu
+      - 2
+      - --set-env-vars
+      - PROJECT_ID=$PROJECT_ID,REGION=us-central1,ENDPOINT_ID=$_ENDPOINT_ID,API_KEY=$_API_KEY,REDIS_URL=$_REDIS_URL
+    id: 'deploy-api'
+    waitFor: ['push-api']
+
+# Images to build
+images:
+  - "gcr.io/$PROJECT_ID/qwen-api:$BUILD_ID"
+
+# Substitutions (set these in Cloud Build trigger)
+substitutions:
+  _ENDPOINT_ID: "your-endpoint-id"
+  _API_KEY: "your-api-key"
+  _REDIS_URL: "redis://localhost:6379"
+
+# Options
+options:
+  machineType: "E2_HIGHCPU_4"
+  logging: CLOUD_LOGGING_ONLY
+
+# Timeout
+timeout: "1800s"  # 30 minutes
