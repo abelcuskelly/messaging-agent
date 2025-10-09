@@ -1,0 +1,27 @@
+
+    Lakers Ticket Information
+    
+    Venue: Crypto.com Arena, Los Angeles, CA
+    Capacity: 19,068 for basketball
+    
+    Pricing Structure:
+    - Lower Bowl: $150-300 (sections 101-130)
+    - Upper Bowl: $50-120 (sections 301-330) 
+    - Courtside: $800-2000 (rows A-F)
+    - Club Level: $200-500 (sections 200s)
+    
+    Policies:
+    - Refunds: Up to 48 hours before game
+    - Upgrades: Up to 2 hours before game
+    - Exchanges: $15 fee, subject to availability
+    
+    Parking:
+    - General: $25-40
+    - Premium: $50-75
+    - Valet: $60-80
+    
+    Concessions:
+    - Beer: $12-15
+    - Soft drinks: $6-8
+    - Food: $8-20
+    

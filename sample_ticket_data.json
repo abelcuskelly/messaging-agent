@@ -1,0 +1,35 @@
+{
+  "teams": {
+    "lakers": {
+      "home_venue": "Crypto.com Arena",
+      "city": "Los Angeles",
+      "conference": "Western",
+      "division": "Pacific"
+    },
+    "warriors": {
+      "home_venue": "Chase Center",
+      "city": "San Francisco",
+      "conference": "Western",
+      "division": "Pacific"
+    }
+  },
+  "pricing": {
+    "lower_bowl": {
+      "min": 150,
+      "max": 300
+    },
+    "upper_bowl": {
+      "min": 50,
+      "max": 120
+    },
+    "courtside": {
+      "min": 800,
+      "max": 2000
+    }
+  },
+  "policies": {
+    "refund_hours": 48,
+    "upgrade_hours": 2,
+    "exchange_fee": 15
+  }
+}

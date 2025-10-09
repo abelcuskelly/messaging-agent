@@ -1,0 +1,50 @@
+[
+  {
+    "id": "lakers-pricing-1",
+    "content": "Lakers vs Warriors - March 15, 2024 - Crypto.com Arena. Lower bowl seats: $150-300, Upper bowl: $50-120, Courtside: $800-2000. Game time: 7:30 PM PST.",
+    "source": "ticket_pricing",
+    "category": "pricing"
+  },
+  {
+    "id": "lakers-pricing-2",
+    "content": "Lakers vs Celtics - March 20, 2024 - Crypto.com Arena. Lower bowl seats: $180-350, Upper bowl: $60-140, Courtside: $900-2200. Game time: 7:00 PM PST.",
+    "source": "ticket_pricing",
+    "category": "pricing"
+  },
+  {
+    "id": "upgrade-policy-1",
+    "content": "Seat upgrades available up to 2 hours before game time. Upgrade cost is the difference between current seat price and new seat price plus $25 processing fee. Upgrades subject to availability.",
+    "source": "upgrade_policy",
+    "category": "upgrades"
+  },
+  {
+    "id": "refund-policy-1",
+    "content": "Full refunds available up to 48 hours before game time. Partial refunds (75%) available 24-48 hours before. No refunds within 24 hours of game time. Exchanges may be available for a $15 fee.",
+    "source": "refund_policy",
+    "category": "refunds"
+  },
+  {
+    "id": "parking-info-1",
+    "content": "Crypto.com Arena parking: General parking $25-40, Premium parking $50-75, Valet parking $60-80. Parking opens 2 hours before game time. Limited street parking available.",
+    "source": "parking_info",
+    "category": "parking"
+  },
+  {
+    "id": "concessions-1",
+    "content": "Arena concessions: Beer $12-15, Soft drinks $6-8, Hot dogs $8-12, Pizza $15-20, Nachos $10-14. Premium dining options available in club sections.",
+    "source": "concessions",
+    "category": "food"
+  },
+  {
+    "id": "seating-chart-1",
+    "content": "Crypto.com Arena seating: Lower bowl sections 101-130 (closest to court), Upper bowl sections 301-330 (higher up), Club sections 200s (premium amenities), Courtside rows A-F (VIP experience).",
+    "source": "seating_info",
+    "category": "seating"
+  },
+  {
+    "id": "team-stats-1",
+    "content": "Lakers 2023-24 season: 45-25 record, 3rd in Western Conference. LeBron James averaging 25.2 points, Anthony Davis 24.8 points. Home record: 28-8, Away record: 17-17.",
+    "source": "team_stats",
+    "category": "statistics"
+  }
+]
