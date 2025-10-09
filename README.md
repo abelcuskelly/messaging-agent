@@ -1094,6 +1094,386 @@ With Batching (10 per batch):
 - Savings: 85% time, 90% cost
 ```
 
+### Mobile SDKs (iOS & Android)
+
+**Features:**
+- **Complete Native SDKs**: Swift (iOS) and Kotlin (Android) implementations
+- **Authentication**: OAuth2/JWT and API key support
+- **Response Caching**: LRU cache with configurable size
+- **Error Handling**: Comprehensive error types and retry logic
+- **Reactive Updates**: Combine (iOS) / Flow (Android) for real-time updates
+- **Conversation Management**: Multi-conversation support with history
+- **UI Integration**: SwiftUI and Jetpack Compose ready
+- **Production Ready**: Thread-safe, memory-efficient, fully tested
+
+**iOS SDK (Swift):**
+```swift
+import QwenMessagingSDK
+
+// Configure SDK
+let config = QwenSDKConfig(
+    baseURL: "https://your-api.com",
+    apiKey: "your-api-key",
+    enableCaching: true,
+    enableLogging: true
+)
+
+let sdk = QwenMessagingSDK(config: config)
+
+// Login
+try await sdk.login(username: "user", password: "pass")
+
+// Send message
+let response = try await sdk.sendMessage("What are the ticket prices?")
+print(response.response)
+
+// SwiftUI Integration
+struct ChatView: View {
+    @StateObject var viewModel: QwenChatViewModel
+    
+    var body: some View {
+        VStack {
+            ScrollView {
+                ForEach(viewModel.messages, id: \.timestamp) { message in
+                    MessageBubble(message: message)
+                }
+            }
+            
+            HStack {
+                TextField("Message", text: $messageText)
+                Button("Send") { viewModel.sendMessage(messageText) }
+            }
+        }
+    }
+}
+```
+
+**Android SDK (Kotlin):**
+```kotlin
+import com.qwen.messaging.sdk.*
+
+// Configure SDK
+val config = QwenSDKConfig(
+    baseURL = "https://your-api.com",
+    apiKey = "your-api-key",
+    enableCaching = true,
+    enableLogging = true,
+    cacheSize = 50
+)
+
+val sdk = QwenMessagingSDK(config, context)
+
+// Login
+lifecycleScope.launch {
+    sdk.login("user", "pass")
+    
+    // Send message
+    val response = sdk.sendMessage("What are the ticket prices?")
+    println(response.response)
+}
+
+// Jetpack Compose Integration
+@Composable
+fun ChatScreen() {
+    val sdk = rememberQwenSDK(config)
+    var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
+    
+    LaunchedEffect(sdk) {
+        sdk.messageFlow.collect { message ->
+            message?.let { messages = messages + it }
+        }
+    }
+    
+    Column {
+        LazyColumn { items(messages) { MessageBubble(it) } }
+        Row {
+            TextField(value = text, onValueChange = { text = it })
+            Button(onClick = { sdk.sendMessage(text) }) { Text("Send") }
+        }
+    }
+}
+```
+
+**Installation:**
+```bash
+# iOS - Swift Package Manager
+dependencies: [
+    .package(url: "https://github.com/your-org/qwen-sdk-ios.git", from: "1.0.0")
+]
+
+# Android - Gradle
+dependencies {
+    implementation 'com.qwen.messaging:sdk:1.0.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+}
+```
+
+### GraphQL API
+
+**Features:**
+- **Flexible Queries**: Request exactly the data you need
+- **Type-Safe Schema**: Strongly typed with Strawberry GraphQL
+- **Real-time Subscriptions**: WebSocket-based live updates
+- **Nested Queries**: Fetch related data in single request
+- **Mutations**: Create, update, delete operations
+- **GraphQL Playground**: Interactive API explorer
+- **Efficient**: Reduce over-fetching and under-fetching
+
+**GraphQL Schema:**
+```graphql
+type Query {
+  me: User
+  conversation(id: String!): Conversation
+  conversations(userId: String, limit: Int): [Conversation!]!
+  experiments: [Experiment!]!
+  experimentResults(name: String!): ExperimentResults
+  circuitBreakers: [CircuitBreakerStatus!]!
+  cacheStats: CacheStats!
+  systemHealth: SystemHealth!
+}
+
+type Mutation {
+  sendMessage(input: ChatInput!): ChatResponse!
+  login(input: LoginInput!): String!
+  clearConversation(conversationId: String!): Boolean!
+  resetCircuitBreaker(name: String!): Boolean!
+}
+
+type Subscription {
+  messageUpdates(conversationId: String!): Message!
+  systemMetrics: CacheStats!
+}
+```
+
+**Example Queries:**
+```graphql
+# Get conversations with nested messages
+query {
+  conversations(limit: 5) {
+    id
+    state
+    messages {
+      role
+      content
+      timestamp
+    }
+    messageCount
+  }
+}
+
+# Send message mutation
+mutation {
+  sendMessage(input: {
+    message: "What are the ticket prices?",
+    conversationId: "conv_123"
+  }) {
+    response
+    conversationId
+    cached
+    durationMs
+  }
+}
+
+# Subscribe to real-time updates
+subscription {
+  messageUpdates(conversationId: "conv_123") {
+    content
+    timestamp
+  }
+}
+```
+
+**Server Setup:**
+```bash
+# Start GraphQL server
+python3 graphql_api/server.py
+
+# Access GraphQL Playground
+open http://localhost:8001/graphql
+```
+
+**Client Usage (Python):**
+```python
+import requests
+
+query = """
+query {
+  conversations(limit: 5) {
+    id
+    state
+    messageCount
+  }
+}
+"""
+
+response = requests.post(
+    "http://localhost:8001/graphql",
+    json={"query": query}
+)
+
+data = response.json()["data"]
+```
+
+### Model Ensemble
+
+**Features:**
+- **5 Aggregation Strategies**: Voting, weighted, confidence, fallback, best-of-N
+- **Parallel Execution**: Run multiple models simultaneously for speed
+- **Adaptive Weights**: Auto-adjust based on model performance
+- **Fault Tolerance**: Fallback chain ensures reliability
+- **Confidence Scoring**: Select most confident predictions
+- **Performance Tracking**: Per-model statistics and monitoring
+- **Dynamic Enable/Disable**: Control which models are active
+
+**Ensemble Strategies:**
+```python
+# 1. VOTING - Majority vote from all models
+# 2. WEIGHTED - Weighted average by model weight and confidence
+# 3. CONFIDENCE - Use prediction with highest confidence
+# 4. FALLBACK - Try models in priority order until success
+# 5. BEST_OF_N - Select best based on composite score
+```
+
+**Usage:**
+```python
+from ml.model_ensemble import ModelEnsemble, ModelConfig, EnsembleStrategy
+
+# Define models
+models = [
+    ModelConfig(
+        name="qwen-4b-primary",
+        endpoint_id="primary-endpoint",
+        weight=0.5,
+        priority=1
+    ),
+    ModelConfig(
+        name="qwen-4b-backup",
+        endpoint_id="backup-endpoint",
+        weight=0.3,
+        priority=2
+    ),
+    ModelConfig(
+        name="qwen-4b-experimental",
+        endpoint_id="experimental-endpoint",
+        weight=0.2,
+        priority=3
+    )
+]
+
+# Create ensemble
+ensemble = ModelEnsemble(
+    models=models,
+    strategy=EnsembleStrategy.WEIGHTED,
+    min_models=2,
+    max_latency_ms=5000
+)
+
+# Make prediction
+messages = [{"role": "user", "content": "What are ticket prices?"}]
+response = await ensemble.predict(messages)
+
+# Get statistics
+stats = ensemble.get_stats()
+print(f"Total Predictions: {stats['total_predictions']}")
+print(f"Model Stats: {stats['models']}")
+```
+
+**Adaptive Ensemble:**
+```python
+from ml.model_ensemble import create_adaptive_ensemble
+
+# Creates ensemble that auto-adjusts weights
+adaptive = create_adaptive_ensemble()
+
+# Automatically improves over time based on performance
+response = await adaptive.predict(messages)
+```
+
+**Benefits:**
+- **Improved Accuracy**: Combine strengths of multiple models
+- **Higher Reliability**: Fallback if primary model fails
+- **Better Coverage**: Different models excel at different tasks
+- **Performance Optimization**: Select fastest model for simple queries
+- **Risk Mitigation**: Don't depend on single model
+
+### Advanced Analytics Dashboards
+
+**Features:**
+- **4 Dashboard Types**: Executive, Technical, Business, Real-time
+- **Interactive Visualizations**: Plotly-based with zoom, hover, drill-down
+- **Multi-metric Views**: 6+ charts per dashboard
+- **Real-time Updates**: Auto-refresh capabilities
+- **Export Ready**: HTML files for sharing and embedding
+- **Responsive Design**: Works on all screen sizes
+
+**Dashboard Types:**
+
+**1. Executive Dashboard:**
+- Conversation volume trends
+- Success rate over time
+- Response time distribution
+- User satisfaction gauge
+- Top issues breakdown
+- Revenue impact tracking
+
+**2. Technical Dashboard:**
+- API latency percentiles (P50, P95, P99)
+- Cache hit rates by type
+- Circuit breaker states
+- Error rate by category
+
+**3. Business Dashboard:**
+- Conversion funnel visualization
+- Revenue by channel (pie chart)
+- Customer lifetime value trends
+- Churn risk indicator
+
+**4. Real-time Dashboard:**
+- Live request rate
+- Active users count
+- Model performance metrics
+- System resource usage
+
+**Creating Dashboards:**
+```python
+from dashboards.advanced_dashboard import AdvancedDashboard
+
+# Create dashboard instance
+dashboard = AdvancedDashboard()
+
+# Create all dashboards
+paths = dashboard.create_all_dashboards()
+
+# Individual dashboards
+executive_path = dashboard.create_executive_dashboard(days=30)
+technical_path = dashboard.create_technical_dashboard()
+business_path = dashboard.create_business_dashboard()
+realtime_path = dashboard.create_realtime_dashboard()
+
+# Open in browser
+import webbrowser
+webbrowser.open(executive_path)
+```
+
+**Generated Files:**
+- `executive_dashboard.html` - Executive summary
+- `technical_dashboard.html` - Technical performance
+- `business_dashboard.html` - Business metrics
+- `realtime_dashboard.html` - Live monitoring
+
+**Quick Start:**
+```bash
+# Generate all dashboards
+python3 dashboards/advanced_dashboard.py
+
+# Open dashboards
+open executive_dashboard.html
+open technical_dashboard.html
+open business_dashboard.html
+open realtime_dashboard.html
+```
+
 ### Production Ready Next Steps
 
 **1. Real Ticketing Backend Integration**
