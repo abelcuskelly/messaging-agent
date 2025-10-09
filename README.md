@@ -1626,6 +1626,219 @@ Memory Usage: ~1GB for 100K documents
 - Use batch operations for bulk updates
 - Set up replication for disaster recovery
 
+### Twilio SMS Integration
+
+**Features:**
+- **Automated Confirmations**: Ticket purchase confirmations with order details
+- **Game Reminders**: Scheduled reminders 24h and 2h before games
+- **Upgrade Notifications**: Seat upgrade confirmations and offers
+- **Refund Confirmations**: Automated refund processing notifications
+- **Event Alerts**: Cancellations, rescheduling, time changes
+- **Promotional SMS**: Marketing campaigns with promo codes
+- **Bulk Messaging**: Send to multiple recipients efficiently
+- **Incoming SMS**: Handle customer replies with auto-responses
+- **Status Tracking**: Real-time delivery status updates
+- **Message History**: Track all sent messages per user
+
+**Quick Start:**
+```bash
+# 1. Install Twilio SDK
+pip install twilio
+
+# 2. Set environment variables
+export TWILIO_ACCOUNT_SID=your_account_sid
+export TWILIO_AUTH_TOKEN=your_auth_token
+export TWILIO_PHONE_NUMBER=+1234567890
+
+# 3. Test SMS integration
+python3 integrations/twilio_integration.py
+```
+
+**Usage:**
+```python
+from integrations.twilio_integration import get_sms_manager
+
+sms_manager = get_sms_manager()
+
+# Send ticket confirmation
+sms_manager.send_ticket_confirmation(
+    to="+1234567890",
+    order_id="ORD123456",
+    game="Lakers vs Warriors",
+    date="March 15, 2024 at 7:30 PM",
+    seats="Section 101, Row A, Seats 1-2",
+    total=450.00,
+    confirmation_code="CONF-ABC123"
+)
+
+# Send game reminder
+sms_manager.send_game_reminder(
+    to="+1234567890",
+    game="Lakers vs Warriors",
+    date="March 15, 2024",
+    time="7:30 PM",
+    venue="Crypto.com Arena",
+    seats="Section 101, Row A"
+)
+
+# Send upgrade notification
+sms_manager.send_upgrade_notification(
+    to="+1234567890",
+    game="Lakers vs Warriors",
+    old_seats="Section 301, Row K",
+    new_seats="Section 101, Row A",
+    price_difference=200.00
+)
+
+# Send refund confirmation
+sms_manager.send_refund_confirmation(
+    to="+1234567890",
+    order_id="ORD123456",
+    game="Lakers vs Warriors",
+    refund_amount=450.00,
+    processing_days=5
+)
+
+# Bulk SMS
+results = sms_manager.send_bulk_sms(
+    recipients=["+1234567890", "+0987654321"],
+    body="Special offer: 20% off all Lakers tickets!",
+    batch_size=100
+)
+```
+
+**SMS Templates:**
+```python
+from integrations.twilio_integration import SMSTemplates
+
+# Ticket confirmation
+body = SMSTemplates.ticket_confirmation(
+    order_id="ORD123",
+    game="Lakers vs Warriors",
+    date="March 15, 2024",
+    seats="Section 101",
+    total=450.00,
+    confirmation_code="CONF-ABC"
+)
+
+# Game reminders
+reminder_24h = SMSTemplates.game_reminder_24h(...)
+reminder_2h = SMSTemplates.game_reminder_2h(...)
+
+# Event alerts
+cancellation = SMSTemplates.event_cancelled(...)
+rescheduled = SMSTemplates.event_rescheduled(...)
+```
+
+**API Endpoints:**
+```
+POST /sms/send                  - Send SMS (admin)
+POST /sms/confirmation          - Send ticket confirmation
+POST /sms/reminder              - Send game reminder
+POST /sms/bulk                  - Send bulk SMS (admin)
+GET  /sms/status/{sid}          - Get message status
+GET  /sms/history/{phone}       - Get message history
+GET  /sms/stats                 - Get SMS statistics
+POST /sms/webhook/incoming      - Handle incoming SMS (Twilio webhook)
+POST /sms/webhook/status        - Handle status updates (Twilio webhook)
+```
+
+**Webhook Configuration:**
+```bash
+# Configure in Twilio Console:
+# 1. Go to Phone Numbers → Active Numbers
+# 2. Select your number
+# 3. Set webhook URLs:
+
+Incoming Messages:
+https://your-api.com/sms/webhook/incoming
+
+Status Callbacks:
+https://your-api.com/sms/webhook/status
+```
+
+**Auto-Reply Keywords:**
+- `HELP` - Customer support information
+- `STOP` - Unsubscribe from SMS
+- `START` - Re-subscribe to SMS
+- `PARKING` - Parking information
+- `DETAILS` - Ticket details link
+
+**Scheduled Reminders:**
+```python
+from integrations.twilio_integration import SMSScheduler
+from datetime import datetime
+
+scheduler = SMSScheduler(sms_manager)
+
+# Schedule reminders for a game
+game_time = datetime(2024, 3, 15, 19, 30)  # 7:30 PM
+
+scheduler.schedule_game_reminders(
+    phone="+1234567890",
+    game="Lakers vs Warriors",
+    game_datetime=game_time,
+    venue="Crypto.com Arena",
+    seats="Section 101, Row A"
+)
+# Automatically sends reminders 24h and 2h before game
+```
+
+**Integration with Purchase Flow:**
+```python
+# In your ticket purchase endpoint
+@app.post("/tickets/purchase")
+async def purchase_tickets(order: OrderRequest):
+    # Process payment
+    order_id = process_payment(order)
+    
+    # Send SMS confirmation
+    sms_manager = get_sms_manager()
+    sms_manager.send_ticket_confirmation(
+        to=order.phone,
+        order_id=order_id,
+        game=order.game,
+        date=order.date,
+        seats=order.seats,
+        total=order.total,
+        confirmation_code=generate_confirmation_code()
+    )
+    
+    # Schedule reminders
+    scheduler = SMSScheduler(sms_manager)
+    scheduler.schedule_game_reminders(
+        phone=order.phone,
+        game=order.game,
+        game_datetime=order.game_datetime,
+        venue=order.venue,
+        seats=order.seats
+    )
+    
+    return {"order_id": order_id, "confirmation_sent": True}
+```
+
+**Environment Variables:**
+```bash
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=your_auth_token
+TWILIO_PHONE_NUMBER=+1234567890
+TEST_PHONE_NUMBER=+1234567890  # For testing
+```
+
+**Cost Optimization:**
+- Use message batching for bulk sends
+- Track and prevent duplicate messages
+- Implement rate limiting per user
+- Use short links to reduce character count
+- Monitor delivery rates and optimize timing
+
+**Compliance:**
+- Include opt-out instructions (STOP)
+- Honor unsubscribe requests immediately
+- Only send to opted-in customers
+- Include business identification
+- Follow TCPA regulations
+
 ### Production Ready Next Steps
 
 **1. Real Ticketing Backend Integration**
