@@ -12,3 +12,17 @@ build/
 # Editor
 .vscode/
 .idea/
+# Generated files
+*_dashboard.html
+dashboard_data.json
+sample_dashboard_data.json
+analytics_dashboard.html
+# Business docs
+biz docs/
+PRODUCT_OVERVIEW.md
+EXECUTIVE_SUMMARY.md
+# Data files
+qdrant_storage/
+redis_data/
+knowledge_base.json
+sample_ticket_data.*
