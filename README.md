@@ -90,6 +90,9 @@ gcloud run deploy qwen-messaging-api \
   --cpu 2
 ```
 
+Auth:
+- Optional API key header: set `API_KEY` env var on Cloud Run; clients must send `X-API-Key: $API_KEY`.
+
 ### Key Environment Variables
 ```bash
 PROJECT_ID=your-project-id

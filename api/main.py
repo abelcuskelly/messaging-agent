@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from pydantic import BaseModel
 from google.cloud import aiplatform
 import os
@@ -32,6 +32,14 @@ def _endpoint_path() -> str:
     return f"projects/{project_id}/locations/{region}/endpoints/{endpoint_id}"
 
 
+def _require_api_key(x_api_key: str | None = Header(default=None)) -> None:
+    """Simple header-based API key check. If API_KEY env is set, enforce it."""
+    expected = os.getenv("API_KEY")
+    if expected:
+        if not x_api_key or x_api_key != expected:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+
 @app.on_event("startup")
 def startup_event():
     global _endpoint
@@ -44,7 +52,7 @@ def startup_event():
         raise RuntimeError(f"Failed to initialize Vertex AI endpoint: {exc}") from exc
 
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_model=ChatResponse, dependencies=[Depends(_require_api_key)])
 async def chat(request: ChatRequest):
     if _endpoint is None:
         raise HTTPException(status_code=500, detail="Endpoint not initialized")
