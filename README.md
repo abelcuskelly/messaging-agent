@@ -91,6 +91,19 @@ export MODEL_ARTIFACT_URI="gs://${BUCKET_NAME}/qwen-messaging-agent/models/merge
 python deploy_inference.py
 ```
 
+Switch API to the custom endpoint:
+1) Note the endpoint resource name printed by the deploy script and extract `ENDPOINT_ID` (the numeric ID at the end).
+2) Update Cloud Run env:
+```bash
+gcloud run services update qwen-messaging-api \
+  --region ${REGION} \
+  --update-env-vars ENDPOINT_ID=YOUR_NEW_ENDPOINT_ID
+```
+3) Smoke test:
+```bash
+curl -X POST "$API_URL/chat" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d '{"message":"Hello!"}'
+```
+
 ### API (Cloud Run)
 Minimal proxy to Vertex Endpoint in `api/`.
 ```bash
