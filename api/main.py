@@ -1,11 +1,23 @@
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from pydantic import BaseModel
 from google.cloud import aiplatform
 import os
 import uuid
+import time
+import json
+import structlog
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import redis
+from typing import Optional
 
 
 app = FastAPI()
+
+# Configure structured logging
+logger = structlog.get_logger()
+
+# Redis client for rate limiting
+_redis_client: Optional[redis.Redis] = None
 
 
 class ChatRequest(BaseModel):
@@ -16,6 +28,13 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     conversation_id: str
+
+
+class ErrorResponse(BaseModel):
+    error: str
+    detail: str
+    request_id: str
+    timestamp: str
 
 
 # In-memory conversation storage (use Redis/Firestore in production)
@@ -30,6 +49,49 @@ def _endpoint_path() -> str:
     region = os.getenv("REGION", "us-central1")
     endpoint_id = os.getenv("ENDPOINT_ID", "your-endpoint-id")
     return f"projects/{project_id}/locations/{region}/endpoints/{endpoint_id}"
+
+
+def _get_redis_client() -> Optional[redis.Redis]:
+    """Get Redis client for rate limiting."""
+    global _redis_client
+    if _redis_client is None:
+        redis_url = os.getenv("REDIS_URL")
+        if redis_url:
+            try:
+                _redis_client = redis.from_url(redis_url, decode_responses=True)
+                _redis_client.ping()  # Test connection
+                logger.info("Redis connected", url=redis_url)
+            except Exception as e:
+                logger.warning("Redis connection failed", error=str(e))
+                _redis_client = None
+    return _redis_client
+
+
+def _rate_limit_check(request: Request, x_api_key: str | None = None) -> None:
+    """Check rate limits using Redis or in-memory fallback."""
+    client = _get_redis_client()
+    if not client:
+        return  # No rate limiting if Redis unavailable
+    
+    # Use API key or IP as identifier
+    identifier = x_api_key or request.client.host
+    key = f"rate_limit:{identifier}"
+    
+    # Allow 60 requests per minute
+    limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
+    window = 60
+    
+    try:
+        current = client.incr(key)
+        if current == 1:
+            client.expire(key, window)
+        if current > limit:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded: {limit} requests per minute"
+            )
+    except redis.RedisError as e:
+        logger.warning("Rate limit check failed", error=str(e))
 
 
 def _require_api_key(x_api_key: str | None = Header(default=None)) -> None:
@@ -52,32 +114,99 @@ def startup_event():
         raise RuntimeError(f"Failed to initialize Vertex AI endpoint: {exc}") from exc
 
 
-@app.post("/chat", response_model=ChatResponse, dependencies=[Depends(_require_api_key)])
-async def chat(request: ChatRequest):
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type((Exception,)),
+)
+def _predict_with_retry(messages: list) -> str:
+    """Make prediction with retry logic."""
     if _endpoint is None:
-        raise HTTPException(status_code=500, detail="Endpoint not initialized")
+        raise RuntimeError("Endpoint not initialized")
+    
+    prediction = _endpoint.predict(instances=[{"messages": messages}])
+    if not prediction.predictions:
+        raise ValueError("Empty predictions from endpoint")
+    
+    return prediction.predictions[0]["response"]
 
-    conv_id = request.conversation_id or str(uuid.uuid4())
 
-    # Get or create conversation history
-    if conv_id not in conversations:
-        conversations[conv_id] = []
-
-    # Add user message
-    conversations[conv_id].append({"role": "user", "content": request.message})
-
-    # Get prediction from Vertex AI
-    prediction = _endpoint.predict(instances=[{"messages": conversations[conv_id]}])
-
+@app.post("/chat", response_model=ChatResponse, dependencies=[Depends(_require_api_key)])
+async def chat(
+    request: ChatRequest,
+    http_request: Request,
+    x_api_key: str | None = Header(default=None)
+):
+    request_id = str(uuid.uuid4())
+    start_time = time.time()
+    
     try:
-        response_text = prediction.predictions[0]["response"]
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"Invalid prediction payload: {exc}")
+        # Rate limiting
+        _rate_limit_check(http_request, x_api_key)
+        
+        if _endpoint is None:
+            raise HTTPException(status_code=500, detail="Endpoint not initialized")
 
-    # Add assistant response to history
-    conversations[conv_id].append({"role": "assistant", "content": response_text})
+        conv_id = request.conversation_id or str(uuid.uuid4())
 
-    return ChatResponse(response=response_text, conversation_id=conv_id)
+        # Get or create conversation history
+        if conv_id not in conversations:
+            conversations[conv_id] = []
+
+        # Add user message
+        conversations[conv_id].append({"role": "user", "content": request.message})
+
+        # Get prediction from Vertex AI with retry
+        response_text = _predict_with_retry(conversations[conv_id])
+
+        # Add assistant response to history
+        conversations[conv_id].append({"role": "assistant", "content": response_text})
+
+        # Log success
+        duration = time.time() - start_time
+        logger.info(
+            "Chat request completed",
+            request_id=request_id,
+            conversation_id=conv_id,
+            duration=duration,
+            message_length=len(request.message),
+            response_length=len(response_text)
+        )
+
+        return ChatResponse(response=response_text, conversation_id=conv_id)
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        # Log error and return structured error response
+        duration = time.time() - start_time
+        error_detail = str(exc)
+        
+        logger.error(
+            "Chat request failed",
+            request_id=request_id,
+            error=error_detail,
+            duration=duration,
+            message_length=len(request.message) if request else 0
+        )
+        
+        # Determine appropriate status code
+        if "Rate limit" in error_detail:
+            status_code = 429
+        elif "not initialized" in error_detail:
+            status_code = 503
+        else:
+            status_code = 500
+            
+        raise HTTPException(
+            status_code=status_code,
+            detail=ErrorResponse(
+                error="Chat request failed",
+                detail=error_detail,
+                request_id=request_id,
+                timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            ).model_dump()
+        )
 
 
 @app.get("/health")

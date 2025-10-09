@@ -120,8 +120,10 @@ gcloud run deploy qwen-messaging-api \
   --cpu 2
 ```
 
-Auth:
+Auth & Rate Limiting:
 - Optional API key header: set `API_KEY` env var on Cloud Run; clients must send `X-API-Key: $API_KEY`.
+- Redis-based rate limiting: set `REDIS_URL` env var (e.g., `redis://localhost:6379`); defaults to 60 requests/minute per IP/API key.
+- Structured logging with request IDs and error handling with retries.
 
 ### Key Environment Variables
 ```bash
@@ -129,6 +131,9 @@ PROJECT_ID=your-project-id
 REGION=us-central1
 BUCKET_NAME=${PROJECT_ID}-vertex-ai-training
 ENDPOINT_ID=your-endpoint-id
+API_KEY=your-api-key  # Optional, for auth
+REDIS_URL=redis://localhost:6379  # Optional, for rate limiting
+RATE_LIMIT_PER_MINUTE=60  # Optional, default 60
 ```
 
 ### Infra Requirements
