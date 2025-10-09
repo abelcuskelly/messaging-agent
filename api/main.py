@@ -9,6 +9,7 @@ import structlog
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import redis
 from typing import Optional
+from log_handler import ConversationLogger
 
 
 app = FastAPI()
@@ -18,6 +19,9 @@ logger = structlog.get_logger()
 
 # Redis client for rate limiting
 _redis_client: Optional[redis.Redis] = None
+
+# BigQuery logger
+_conversation_logger: Optional[ConversationLogger] = None
 
 
 class ChatRequest(BaseModel):
@@ -94,6 +98,19 @@ def _rate_limit_check(request: Request, x_api_key: str | None = None) -> None:
         logger.warning("Rate limit check failed", error=str(e))
 
 
+def _get_conversation_logger() -> Optional[ConversationLogger]:
+    """Get BigQuery conversation logger."""
+    global _conversation_logger
+    if _conversation_logger is None:
+        try:
+            _conversation_logger = ConversationLogger()
+            logger.info("BigQuery conversation logger initialized")
+        except Exception as e:
+            logger.warning("BigQuery logger initialization failed", error=str(e))
+            _conversation_logger = None
+    return _conversation_logger
+
+
 def _require_api_key(x_api_key: str | None = Header(default=None)) -> None:
     """Simple header-based API key check. If API_KEY env is set, enforce it."""
     expected = os.getenv("API_KEY")
@@ -164,6 +181,8 @@ async def chat(
 
         # Log success
         duration = time.time() - start_time
+        duration_ms = int(duration * 1000)
+        
         logger.info(
             "Chat request completed",
             request_id=request_id,
@@ -173,6 +192,18 @@ async def chat(
             response_length=len(response_text)
         )
 
+        # Log to BigQuery
+        conversation_logger = _get_conversation_logger()
+        if conversation_logger:
+            conversation_logger.log_interaction(
+                conversation_id=conv_id,
+                user_message=request.message,
+                agent_response=response_text,
+                request_id=request_id,
+                duration_ms=duration_ms,
+                status="success"
+            )
+
         return ChatResponse(response=response_text, conversation_id=conv_id)
         
     except HTTPException:
@@ -180,6 +211,7 @@ async def chat(
     except Exception as exc:
         # Log error and return structured error response
         duration = time.time() - start_time
+        duration_ms = int(duration * 1000)
         error_detail = str(exc)
         
         logger.error(
@@ -189,6 +221,17 @@ async def chat(
             duration=duration,
             message_length=len(request.message) if request else 0
         )
+
+        # Log error to BigQuery
+        conversation_logger = _get_conversation_logger()
+        if conversation_logger and request:
+            conversation_logger.log_error(
+                conversation_id=request.conversation_id or "unknown",
+                user_message=request.message,
+                error_detail=error_detail,
+                request_id=request_id,
+                duration_ms=duration_ms
+            )
         
         # Determine appropriate status code
         if "Rate limit" in error_detail:
