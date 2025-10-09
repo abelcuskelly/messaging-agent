@@ -125,6 +125,11 @@ Auth & Rate Limiting:
 - Redis-based rate limiting: set `REDIS_URL` env var (e.g., `redis://localhost:6379`); defaults to 60 requests/minute per IP/API key.
 - Structured logging with request IDs and error handling with retries.
 
+Health Checks:
+- `/health` - Basic health check (always returns 200 if service is running)
+- `/ready` - Readiness probe (validates Vertex AI endpoint and Redis connectivity)
+- `/live` - Liveness probe (indicates if service should be restarted)
+
 ### Key Environment Variables
 ```bash
 PROJECT_ID=your-project-id

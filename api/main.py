@@ -211,6 +211,53 @@ async def chat(
 
 @app.get("/health")
 async def health():
+    """Basic health check - always returns healthy if service is running."""
     return {"status": "healthy"}
+
+
+@app.get("/ready")
+async def readiness():
+    """Readiness check - validates all dependencies are available."""
+    checks = {
+        "vertex_endpoint": False,
+        "redis": False,
+        "overall": False
+    }
+    
+    # Check Vertex AI endpoint
+    try:
+        if _endpoint is not None:
+            # Try a simple prediction to verify endpoint is responsive
+            test_messages = [{"role": "user", "content": "test"}]
+            prediction = _endpoint.predict(instances=[{"messages": test_messages}])
+            if prediction.predictions:
+                checks["vertex_endpoint"] = True
+    except Exception as e:
+        logger.warning("Vertex endpoint readiness check failed", error=str(e))
+    
+    # Check Redis connection
+    try:
+        redis_client = _get_redis_client()
+        if redis_client:
+            redis_client.ping()
+            checks["redis"] = True
+        else:
+            # Redis is optional, so mark as healthy if not configured
+            checks["redis"] = True
+    except Exception as e:
+        logger.warning("Redis readiness check failed", error=str(e))
+    
+    # Overall readiness
+    checks["overall"] = checks["vertex_endpoint"]  # Only require Vertex endpoint
+    
+    status_code = 200 if checks["overall"] else 503
+    return checks, status_code
+
+
+@app.get("/live")
+async def liveness():
+    """Liveness check - indicates if the service should be restarted."""
+    # Basic liveness - if we can respond, we're alive
+    return {"status": "alive", "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
 
 
