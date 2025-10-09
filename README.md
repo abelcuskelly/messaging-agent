@@ -766,6 +766,334 @@ CIRCUIT_BREAKER_SUCCESS_THRESHOLD=2
 CIRCUIT_BREAKER_REQUEST_TIMEOUT=10.0
 ```
 
+### Model A/B Testing Framework
+
+**Features:**
+- **Variant Management**: Create and manage multiple model variants for comparison
+- **Traffic Splitting**: Configurable weight-based traffic allocation
+- **Consistent Hashing**: Same user always gets same variant for consistency
+- **Comprehensive Metrics**: Track success rate, latency, satisfaction, conversion
+- **Statistical Analysis**: Automatic winner determination with significance testing
+- **Redis Persistence**: Store experiment data and user assignments
+- **Admin API**: Full experiment lifecycle management
+
+**Creating an A/B Test:**
+```python
+from ml.ab_testing import get_ab_test_manager, ModelVariant
+
+manager = get_ab_test_manager()
+
+# Define variants
+variants = [
+    ModelVariant(
+        name="baseline",
+        model_id="Qwen/Qwen3-4B-Instruct-2507",
+        endpoint_id="baseline-endpoint-id",
+        weight=0.5,  # 50% traffic
+        description="Baseline model"
+    ),
+    ModelVariant(
+        name="finetuned",
+        model_id="Qwen/Qwen3-4B-Instruct-2507-finetuned",
+        endpoint_id="finetuned-endpoint-id",
+        weight=0.5,  # 50% traffic
+        description="Fine-tuned model"
+    )
+]
+
+# Create experiment
+experiment = manager.create_experiment(
+    name="baseline-vs-finetuned",
+    variants=variants,
+    duration_days=7,
+    min_sample_size=100
+)
+
+# Start experiment
+experiment.start()
+
+# Get variant for user
+variant = manager.get_variant_for_user("baseline-vs-finetuned", user_id)
+
+# Record metrics
+experiment.record_request(
+    variant_name="baseline",
+    success=True,
+    latency_ms=150,
+    satisfaction=0.85
+)
+
+# Get results
+results = experiment.get_results()
+print(f"Winner: {results['winner']}")
+```
+
+**API Endpoints:**
+```
+POST /ab-tests/experiments              - Create experiment (admin)
+POST /ab-tests/experiments/{name}/start - Start experiment
+POST /ab-tests/experiments/{name}/pause - Pause experiment
+GET  /ab-tests/experiments              - List all experiments
+GET  /ab-tests/experiments/{name}       - Get experiment details
+GET  /ab-tests/experiments/{name}/results - Get results with winner
+GET  /ab-tests/experiments/{name}/comparison - Side-by-side comparison
+POST /ab-tests/experiments/{name}/record - Record metrics
+GET  /ab-tests/experiments/{name}/variant - Get user's variant
+```
+
+**Metrics Tracked:**
+- Total requests per variant
+- Success rate and failure rate
+- Average latency (ms)
+- User satisfaction score
+- Conversion rate
+- Statistical significance
+
+**Winner Determination:**
+```python
+# Composite score calculation
+score = (
+    success_rate * 0.4 +
+    user_satisfaction * 0.3 +
+    (1 - normalized_latency) * 0.3
+)
+```
+
+### Conversation State Management
+
+**Features:**
+- **12 Conversation States**: Complete dialogue flow management
+- **Intent Classification**: 9 intent types with keyword matching
+- **Automatic Transitions**: State changes based on user actions
+- **Context Tracking**: Tickets, orders, payments, support issues
+- **Redis Persistence**: State saved across sessions
+- **Multi-turn Support**: Handle complex conversation flows
+- **Available Actions**: Dynamic action suggestions per state
+
+**Conversation States:**
+```
+GREETING → BROWSING → SELECTING → PURCHASING → PAYMENT → CONFIRMATION → CLOSING → ENDED
+
+Support Flows (from any state):
+→ SUPPORT / UPGRADE / REFUND → CLOSING
+```
+
+**Intent Types:**
+- `GREETING` - Hello, hi, good morning
+- `BROWSE_TICKETS` - Show, browse, available games
+- `CHECK_PRICE` - Price, cost, how much
+- `BUY_TICKET` - Buy, purchase, book
+- `UPGRADE_SEAT` - Upgrade, better seat
+- `REQUEST_REFUND` - Refund, cancel, money back
+- `ASK_QUESTION` - What, when, where, how
+- `COMPLAINT` - Problem, issue, unhappy
+- `GOODBYE` - Bye, thanks, goodbye
+
+**Usage:**
+```python
+from conversation.state_machine import get_conversation_manager, ConversationFlowManager, IntentClassifier
+
+# Initialize
+manager = get_conversation_manager()
+intent_classifier = IntentClassifier()
+flow_manager = ConversationFlowManager(manager, intent_classifier)
+
+# Process user message
+result = flow_manager.process_message(
+    conversation_id="conv_123",
+    user_id="user_456",
+    message="I want to buy Lakers tickets"
+)
+
+# Result includes:
+# - current_state: "browsing"
+# - intent: "buy_ticket"
+# - available_actions: ["select_tickets", "ask_question"]
+# - suggested_prompt: "What game or event are you interested in?"
+# - context: Full conversation context
+
+# Manual state transition
+manager.update_conversation(
+    conversation_id="conv_123",
+    trigger="select_tickets",
+    selected_game="Lakers vs Warriors",
+    selected_section="101"
+)
+```
+
+**Context Data Tracked:**
+- Selected game, section, seats
+- Ticket price and order ID
+- Payment method and confirmation code
+- Support issue type and resolution status
+- Message count and timestamps
+
+### Automated Quality Checks
+
+**Features:**
+- **Multi-dimensional Quality Assessment**: 6 quality dimensions
+- **Coherence Checking**: Length, completeness, repetition, capitalization
+- **Relevance Checking**: Term overlap, generic response detection
+- **Safety Checking**: Inappropriate content, PII detection, financial advice
+- **Sentiment Analysis**: Positive/negative tone with Google NL API
+- **Grammar Checking**: Punctuation, spacing, formatting
+- **Batch Processing**: Check multiple responses efficiently
+- **Quality Reporting**: Aggregate statistics and issue tracking
+- **Regression Testing**: Compare model versions for quality degradation
+
+**Quality Dimensions:**
+```python
+# Scoring weights
+coherence_score * 0.25    # Well-formed, complete responses
+relevance_score * 0.25    # Relevant to user query
+safety_score * 0.20       # No inappropriate content
+sentiment_score * 0.15    # Positive, helpful tone
+grammar_score * 0.10      # Proper grammar and formatting
+length_score * 0.05       # Appropriate response length
+```
+
+**Usage:**
+```python
+from quality.quality_checks import get_qa_system, QualityScore
+
+qa_system = get_qa_system()
+
+# Check single response
+score = qa_system.check_response(
+    user_message="What are the ticket prices?",
+    agent_response="Lakers tickets range from $50 to $2000 depending on seats.",
+    context=""
+)
+
+print(f"Overall Score: {score.overall_score:.2f}")
+print(f"Passed: {score.passed}")
+print(f"Issues: {score.issues}")
+
+# Batch check
+conversations = [
+    {"user_message": "Hello", "agent_response": "Hi! How can I help?"},
+    {"user_message": "Prices?", "agent_response": "Tickets are $50-2000"}
+]
+
+scores = qa_system.batch_check(conversations)
+report = qa_system.get_quality_report(scores)
+
+print(f"Pass Rate: {report['summary']['pass_rate']:.1%}")
+print(f"Avg Score: {report['average_scores']['overall']:.2f}")
+```
+
+**Quality Thresholds:**
+```python
+min_overall_score = 0.7   # 70% minimum overall quality
+min_coherence = 0.6       # 60% minimum coherence
+min_relevance = 0.5       # 50% minimum relevance
+min_safety = 0.9          # 90% minimum safety (strict)
+```
+
+**Safety Checks:**
+- Inappropriate language detection
+- PII leakage prevention (SSN, credit cards, phone numbers)
+- Financial advice detection
+- Harmful content filtering
+
+**Regression Testing:**
+```python
+from quality.quality_checks import RegressionTester
+
+tester = RegressionTester(qa_system)
+
+# Set baseline
+tester.set_baseline("v1.0", test_cases)
+
+# Test new version
+result = tester.test_regression("v2.0", test_cases, "v1.0")
+
+if result["regression_detected"]:
+    print(f"⚠️ Quality regression: {result['difference']:.2%}")
+else:
+    print(f"✅ No regression. Improvement: {result['difference']:.2%}")
+```
+
+### Request Batching for Cost Optimization
+
+**Features:**
+- **Intelligent Batching**: Group requests for efficient processing
+- **Configurable Parameters**: Batch size, wait time, priority
+- **Adaptive Batching**: Auto-adjust based on load
+- **Priority Queue**: High-priority requests processed first
+- **Cost Tracking**: Calculate savings from batching
+- **Async Processing**: Non-blocking batch operations
+- **Statistics**: Real-time batching metrics
+
+**Cost Savings:**
+```
+Single Requests: 10 requests × 100ms = 1000ms total
+Batched Requests: 10 requests in 1 batch = 150ms total
+Cost Savings: 85% reduction in processing time
+API Call Reduction: 10 calls → 1 call = 90% fewer API calls
+```
+
+**Configuration:**
+```python
+from optimization.request_batching import RequestBatcher
+
+batcher = RequestBatcher(
+    max_batch_size=10,        # Maximum requests per batch
+    max_wait_time_ms=100,     # Maximum wait time to fill batch
+    min_batch_size=2,         # Minimum requests before processing
+    enable_priority=True      # Enable priority-based ordering
+)
+
+await batcher.start()
+```
+
+**Usage:**
+```python
+# Add request to batch
+response = await batcher.add_request(
+    user_id="user_123",
+    message="What are the ticket prices?",
+    conversation_id="conv_456",
+    priority=5  # Higher = more priority
+)
+
+# Adaptive batching (auto-adjusts to load)
+from optimization.request_batching import get_adaptive_batcher
+
+adaptive_batcher = await get_adaptive_batcher()
+response = await adaptive_batcher.add_request(
+    user_id="user_123",
+    message="Show me Lakers games",
+    conversation_id="conv_456"
+)
+
+# Get batching statistics
+stats = batcher.get_stats()
+print(f"Total Requests: {stats['total_requests']}")
+print(f"Total Batches: {stats['total_batches']}")
+print(f"Avg Batch Size: {stats['avg_batch_size']:.1f}")
+print(f"Avg Cost Saved: {stats['avg_cost_saved_pct']:.1f}%")
+```
+
+**Adaptive Batching:**
+- **High Load** (>20 pending): Increase batch size, increase wait time
+- **Low Load** (<5 pending): Decrease batch size, decrease wait time
+- **Automatic Tuning**: Optimizes for both latency and cost
+
+**Performance Impact:**
+```
+Without Batching:
+- 100 requests × 100ms = 10,000ms
+- 100 API calls
+- Cost: $X
+
+With Batching (10 per batch):
+- 10 batches × 150ms = 1,500ms
+- 10 API calls
+- Cost: $X/10
+- Savings: 85% time, 90% cost
+```
+
 ### Production Ready Next Steps
 
 **1. Real Ticketing Backend Integration**
