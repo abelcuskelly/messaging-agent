@@ -155,7 +155,8 @@ TRAINING_DATA_URI=gs://your-bucket/training-data  # For model monitoring
 - Create Artifact Registry repo `ml-training` (Docker) in your region.
 - Create/stage Cloud Storage bucket `${PROJECT_ID}-vertex-ai-training`.
 - Create BigQuery dataset `messaging_logs` for conversation logging.
-- Service accounts need Vertex AI + Storage + BigQuery + Monitoring permissions.
+- Create Vertex AI Vector Search index for RAG (optional).
+- Service accounts need Vertex AI + Storage + BigQuery + Monitoring + Vector Search permissions.
 
 ### GPU Notes
 - Start with 1× T4 for development; scale to V100/A100 for speed.
@@ -328,6 +329,83 @@ endpoint.deploy(model=new_model, traffic_split={"0": 90, "1": 10})
 - Optional improvements
   - RAG for team/event FAQs; index creation and retrieval path.
   - HParam tuning; Pipelines for retraining; CI/CD triggers on main.
+
+### RAG (Retrieval Augmented Generation)
+
+**Features:**
+- **Vector Search**: Uses Vertex AI Vector Search with text embeddings for document retrieval
+- **Text Embeddings**: Leverages `textembedding-gecko@003` for query/document embeddings
+- **Context Retrieval**: Searches and formats relevant documents for enhanced responses
+- **RAG Agent**: Enhanced chat agent that uses retrieved context for better answers
+- **Sample Documents**: Pre-built sports ticketing FAQ documents (venue, policies, parking)
+- **Graceful Fallback**: Falls back to regular chat if RAG fails
+
+**Setup:**
+1. Create Vertex AI Vector Search index:
+```bash
+# Create index endpoint
+gcloud ai index-endpoints create --display-name="qwen-rag-index" --region=us-central1
+
+# Create index with sample documents
+python -c "
+from agent.rag import create_sample_documents
+from google.cloud import aiplatform_v1
+import json
+
+# Upload sample documents to your vector index
+documents = create_sample_documents()
+# Implementation depends on your vector index setup
+"
+```
+
+2. Use RAG in your agent:
+```python
+from agent.rag import RAGSystem, RAGAgent
+from google.cloud import aiplatform
+
+# Initialize RAG system
+rag = RAGSystem(index_endpoint="your-index-endpoint-id")
+rag_agent = RAGAgent(endpoint=your_vertex_endpoint, rag_system=rag)
+
+# Enhanced chat with context
+response = rag_agent.chat("Where do the Lakers play?")
+```
+
+### Vertex AI Pipeline (Automated Training)
+
+**Complete Pipeline**: Data Prep → Train → Eval → Conditional Deploy
+
+**Features:**
+- **Data Preparation**: Validates and prepares training datasets with quality metrics
+- **Model Training**: Complete LoRA fine-tuning with 4-bit quantization and GCS upload
+- **Model Evaluation**: Automated evaluation with composite scoring (response rate + quality)
+- **Conditional Deployment**: Only deploys if model meets quality threshold (default 0.7)
+- **GCS Integration**: Automatic model artifact upload to Cloud Storage
+- **Metrics Tracking**: Comprehensive metrics at each pipeline stage
+- **Parameterized**: Configurable hyperparameters and thresholds
+
+**Run Pipeline:**
+```bash
+# Compile pipeline
+python pipeline.py compile
+
+# Run complete pipeline
+python pipeline.py run your-project-id us-central1 your-bucket-name
+```
+
+**Pipeline Parameters:**
+- `dataset_name`: Training dataset (default: "OpenAssistant/oasst2")
+- `model_name`: Base model (default: "Qwen/Qwen3-4B-Instruct-2507")
+- `epochs`: Training epochs (default: 2)
+- `batch_size`: Batch size (default: 4)
+- `learning_rate`: Learning rate (default: 2e-4)
+- `eval_threshold`: Deployment threshold (default: 0.7)
+
+**Pipeline Outputs:**
+- Trained model artifacts in GCS
+- Evaluation metrics and scores
+- Conditional endpoint deployment
+- Comprehensive logging and monitoring
 
 ### Integrating into an Existing Codebase
 - Call the Vertex Endpoint directly:
