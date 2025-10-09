@@ -572,6 +572,67 @@ python3 simple_dashboard.py --port 8080
 - **Date Range Support**: Export data for custom time periods
 - **Custom Branding**: Company colors and professional styling in PDFs
 
+### Knowledge Base Setup for Ticket Information
+
+**Features:**
+- **Multi-format Support**: Process JSON, CSV, and text files containing ticket data
+- **Automated Processing**: Convert raw ticket data into searchable knowledge base
+- **Sample Data Generation**: Create test data for development and testing
+- **Search Integration**: Ready for integration with RAG system
+- **Flexible Data Structure**: Handle pricing, policies, team info, and statistics
+
+**Supported Data Types:**
+- **Ticket Pricing**: Game prices, seat categories, dynamic pricing
+- **Policies**: Refund, upgrade, exchange policies and timeframes
+- **Venue Information**: Arena details, seating charts, capacity
+- **Team Statistics**: Records, player stats, season information
+- **Concessions**: Food and beverage pricing and availability
+- **Parking**: Rates, locations, availability information
+
+**Quick Start:**
+```bash
+# Create sample data for testing
+python3 simple_knowledge_base.py --create-samples
+
+# Test the knowledge base
+python3 simple_knowledge_base.py --test
+
+# Process your ticket data
+python3 simple_knowledge_base.py --process-file your_ticket_data.json --output knowledge_base.json
+```
+
+**Data Processing:**
+- **JSON Files**: Structured data like team info, pricing tiers, policies
+- **CSV Files**: Tabular data like game schedules, pricing tables, statistics
+- **Text Files**: Unstructured information like policies, descriptions, FAQs
+
+**Integration with RAG:**
+- Processed documents are ready for Vertex AI Vector Search
+- Compatible with existing RAG system in `agent/rag.py`
+- Supports semantic search and retrieval for accurate responses
+- Automatic categorization and metadata extraction
+
+**Files Created:**
+- `simple_knowledge_base.py` - Main processing tool
+- `knowledge_base_guide.md` - Complete setup guide
+- `sample_ticket_data.*` - Example data files
+- `knowledge_base.json` - Processed knowledge base
+
+**Example Usage:**
+```python
+from simple_knowledge_base import SimpleKnowledgeBaseBuilder
+
+# Process your ticket data
+builder = SimpleKnowledgeBaseBuilder()
+documents = builder.process_ticket_data("your_ticket_data.json")
+
+# Search for relevant information
+results = builder.search_documents(documents, "What are the ticket prices?", top_k=3)
+
+# Save processed knowledge base
+builder.save_documents_to_file(documents, "knowledge_base.json")
+```
+
 ### RAG (Retrieval Augmented Generation)
 
 **Features:**
