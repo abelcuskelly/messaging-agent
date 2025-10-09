@@ -340,6 +340,93 @@ endpoint.deploy(model=new_model, traffic_split={"0": 90, "1": 10})
   - RAG for team/event FAQs; index creation and retrieval path.
   - HParam tuning; Pipelines for retraining; CI/CD triggers on main.
 
+### OAuth2/JWT Authentication System
+
+**Features:**
+- **JWT Token Authentication**: Access and refresh tokens with configurable expiration
+- **User Management**: Registration, login, logout with secure password hashing (BCrypt)
+- **Session Management**: Redis-based session tracking with multi-device support
+- **API Key Authentication**: Service-to-service authentication for external integrations
+- **Role-Based Access Control**: Fine-grained permissions with scopes
+- **Token Revocation**: Immediate token blacklisting on logout
+- **Rate Limiting**: Tier-based rate limits (50 req/min standard, 100 req/min premium)
+
+**Authentication Endpoints:**
+```
+POST /auth/register         - Register new user
+POST /auth/token           - Login (returns access & refresh tokens)
+POST /auth/refresh         - Refresh access token
+POST /auth/logout          - Logout and revoke tokens
+GET  /auth/me              - Get current user information
+GET  /auth/sessions        - List active sessions
+POST /auth/sessions/revoke-all - Revoke all user sessions
+POST /auth/api-key/create  - Create API key (admin only)
+POST /auth/api-key/revoke  - Revoke API key
+GET  /auth/api-key/validate - Validate API key
+```
+
+**Quick Start:**
+```bash
+# 1. Install dependencies
+pip install -r api/requirements.txt
+
+# 2. Start the secure API server
+python3 api/main_secure.py
+
+# 3. Register a user
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john","email":"john@example.com","password":"SecurePass123!"}'
+
+# 4. Login to get tokens
+curl -X POST http://localhost:8000/auth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=john&password=SecurePass123!"
+
+# 5. Use token for authenticated requests
+curl -X POST http://localhost:8000/chat \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"What are the ticket prices?"}'
+```
+
+**Scopes & Permissions:**
+- `chat` - Access chat functionality
+- `view_dashboard` - View analytics dashboard
+- `view_history` - View conversation history
+- `delete_history` - Delete conversations
+- `admin` - Administrative functions
+
+**Security Configuration:**
+```python
+# Environment variables
+JWT_SECRET_KEY=your-secret-key-here  # Generate with: secrets.token_urlsafe(32)
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+**API Key Authentication (Service-to-Service):**
+```python
+# Create API key as admin
+response = requests.post("/auth/api-key/create", 
+    params={"service_name": "external_service", "scopes": ["chat"]},
+    headers={"Authorization": f"Bearer {admin_token}"})
+api_key = response.json()["api_key"]
+
+# Use API key in requests
+response = requests.post("/chat",
+    json={"message": "Hello"},
+    headers={"X-API-Key": api_key})
+```
+
+**Testing:**
+```bash
+# Run the authentication test suite
+python3 test_auth.py
+```
+
 ### Production Ready Next Steps
 
 **1. Real Ticketing Backend Integration**
