@@ -536,6 +536,122 @@ REDIS_MAX_CONNECTIONS=50
 USE_REDIS_SENTINEL=false
 ```
 
+### OpenTelemetry Distributed Tracing
+
+**Features:**
+- **Full Distributed Tracing**: Complete request lifecycle tracking across all services
+- **Auto-instrumentation**: Automatic tracing for FastAPI, Redis, Requests, Logging
+- **Trace Propagation**: Context flows seamlessly across service boundaries
+- **Multiple Exporters**: Jaeger, OTLP, Prometheus, Console output
+- **Metrics Collection**: Request counts, latency, errors, cache performance
+- **Baggage Support**: Contextual data propagation across services
+- **Exception Recording**: Automatic error capture with stack traces
+- **Performance Analysis**: Identify bottlenecks and optimize latency
+
+**Observability Stack:**
+```
+Jaeger UI:     http://localhost:16686  (Trace visualization)
+Prometheus:    http://localhost:9090   (Metrics collection)
+OTLP Endpoint: localhost:4317          (OpenTelemetry Protocol)
+```
+
+**Metrics Tracked:**
+```python
+# Request Metrics
+http_requests_total              # Total HTTP requests
+http_request_duration_seconds    # Request latency histogram
+http_requests_active             # Active concurrent requests
+
+# Error Metrics
+errors_total                     # Total errors by type
+
+# Cache Metrics
+cache_hits_total                 # Cache hit counter
+cache_misses_total               # Cache miss counter
+```
+
+**Trace Visualization Example:**
+```
+chat.request (150ms)
+├── chat.process (145ms)
+│   ├── chat.cache_lookup (5ms) ✓
+│   ├── chat.generate_response (135ms)
+│   │   ├── model.inference (100ms)
+│   │   └── chat.cache_store (3ms)
+│   └── response.format (5ms)
+```
+
+**Setup:**
+```bash
+# 1. Start Jaeger (for trace visualization)
+docker run -d --name jaeger \
+  -p 16686:16686 \
+  -p 14250:14250 \
+  jaegertracing/all-in-one
+
+# 2. Start the traced API
+python3 api/main_traced.py
+
+# 3. View traces in Jaeger UI
+open http://localhost:16686
+```
+
+**Environment Configuration:**
+```bash
+SERVICE_NAME=qwen-messaging-agent
+SERVICE_VERSION=1.0.0
+ENVIRONMENT=production
+OTLP_ENDPOINT=localhost:4317
+JAEGER_ENDPOINT=localhost:14250
+PROMETHEUS_PORT=9090
+SAMPLING_RATE=1.0  # 100% sampling (adjust for production)
+ENABLE_JAEGER=true
+ENABLE_OTLP=false
+ENABLE_PROMETHEUS=true
+```
+
+**Usage in Code:**
+```python
+from tracing.telemetry import get_telemetry
+
+telemetry = get_telemetry()
+
+# Decorator-based tracing
+@telemetry.traced("my_function")
+def my_function(x, y):
+    return x + y
+
+# Context manager tracing
+with telemetry.span("custom_operation") as span:
+    span.set_attribute("user_id", user_id)
+    result = perform_operation()
+    span.set_attribute("result_size", len(result))
+
+# Trace propagation across services
+headers = {}
+telemetry.inject_context(headers)
+response = requests.post(downstream_service, headers=headers)
+```
+
+**Testing:**
+```bash
+# Run tracing tests
+python3 test_tracing.py
+
+# View traces in Jaeger
+# 1. Open http://localhost:16686
+# 2. Select service: 'qwen-messaging-agent'
+# 3. Click 'Find Traces'
+# 4. Explore span details and performance metrics
+```
+
+**Production Best Practices:**
+- Set sampling rate to 0.1-0.5 (10-50%) for high-traffic services
+- Use OTLP exporter for centralized trace collection
+- Configure retention policies in Jaeger/Tempo
+- Set up alerts on high latency traces
+- Monitor trace sampling and storage costs
+
 ### Production Ready Next Steps
 
 **1. Real Ticketing Backend Integration**
