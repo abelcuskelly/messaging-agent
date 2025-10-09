@@ -652,6 +652,120 @@ python3 test_tracing.py
 - Set up alerts on high latency traces
 - Monitor trace sampling and storage costs
 
+### Circuit Breakers for Error Handling
+
+**Features:**
+- **Three-State Pattern**: CLOSED (normal), OPEN (failing), HALF_OPEN (testing recovery)
+- **Automatic Failure Detection**: Opens circuit after configurable failure threshold
+- **Self-Healing**: Automatic recovery attempts after timeout period
+- **Graceful Degradation**: Fallback responses when services unavailable
+- **Manual Control**: Admin endpoints to reset circuits
+- **Comprehensive Statistics**: Real-time monitoring of all circuit breakers
+- **Thread-Safe**: Concurrent request handling with proper locking
+- **Timeout Protection**: Configurable request timeouts
+
+**Circuit Breaker Configuration:**
+```python
+# Registered Circuit Breakers
+"model_inference":    failure_threshold=3, recovery_timeout=30s, timeout=5s
+"cache_operations":   failure_threshold=5, recovery_timeout=15s
+"external_api":       failure_threshold=3, recovery_timeout=60s, timeout=10s
+```
+
+**State Transitions:**
+```
+CLOSED (Normal Operation)
+   ↓ (failures >= threshold)
+OPEN (Rejecting Requests)
+   ↓ (after recovery_timeout)
+HALF_OPEN (Testing Recovery)
+   ↓ (success_threshold met)
+CLOSED (Recovered)
+```
+
+**Usage:**
+```python
+from resilience.circuit_breaker import circuit_breaker, CircuitBreakerError
+
+# Decorator usage
+@circuit_breaker("external_api", failure_threshold=3, recovery_timeout=60)
+def call_external_api():
+    return requests.get("https://api.example.com/tickets")
+
+# Try-catch usage
+try:
+    result = call_external_api()
+except CircuitBreakerError:
+    # Circuit is open, use fallback
+    result = get_fallback_response()
+
+# Manual circuit breaker
+from resilience.circuit_breaker import CircuitBreaker
+
+breaker = CircuitBreaker("my_service", failure_threshold=5)
+try:
+    result = breaker.call(risky_function, arg1, arg2)
+except CircuitBreakerError:
+    result = fallback_value
+```
+
+**API Endpoints:**
+```
+GET  /circuit-breakers              - View all circuit breaker states
+POST /circuit-breakers/{name}/reset - Reset specific circuit breaker (admin)
+POST /circuit-breakers/reset-all    - Reset all circuit breakers (admin)
+GET  /ready                         - Readiness check with circuit status
+```
+
+**Monitoring:**
+```bash
+# Check circuit breaker status
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8000/circuit-breakers
+
+# Response includes:
+# - Current state (closed/open/half_open)
+# - Total requests, successes, failures
+# - Success rate and rejection count
+# - Recent failure details
+# - Last failure timestamp
+```
+
+**Testing:**
+```bash
+# Run circuit breaker tests
+python3 test_circuit_breakers.py
+
+# Test scenarios:
+# - Normal operation (CLOSED state)
+# - Failure threshold triggering (OPEN state)
+# - Recovery testing (HALF_OPEN state)
+# - Fallback mechanisms
+# - Manual reset
+# - Performance impact
+```
+
+**Fallback Strategies:**
+```python
+def _get_fallback_response(message: str) -> str:
+    """Intelligent fallback based on message content."""
+    if "price" in message.lower():
+        return "Please visit our website for current pricing"
+    elif "refund" in message.lower():
+        return "Contact support@example.com for refunds"
+    else:
+        return "Service temporarily unavailable. Please try again shortly."
+```
+
+**Production Configuration:**
+```python
+# Environment variables
+CIRCUIT_BREAKER_FAILURE_THRESHOLD=5
+CIRCUIT_BREAKER_RECOVERY_TIMEOUT=60
+CIRCUIT_BREAKER_SUCCESS_THRESHOLD=2
+CIRCUIT_BREAKER_REQUEST_TIMEOUT=10.0
+```
+
 ### Production Ready Next Steps
 
 **1. Real Ticketing Backend Integration**
