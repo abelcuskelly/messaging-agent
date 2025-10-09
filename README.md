@@ -130,6 +130,14 @@ Health Checks:
 - `/ready` - Readiness probe (validates Vertex AI endpoint and Redis connectivity)
 - `/live` - Liveness probe (indicates if service should be restarted)
 
+**Health Check Features:**
+- **Dependency Validation**: `/ready` endpoint tests actual connectivity to Vertex AI endpoint and Redis
+- **Graceful Degradation**: Redis failures don't block readiness (Redis is optional)
+- **Proper Status Codes**: Returns 503 for readiness failures, 200 for healthy
+- **Structured Logging**: Health check failures are logged with context
+- **Kubernetes/Cloud Run Ready**: Designed for use with container orchestration health probes
+- **Real-time Testing**: `/ready` performs actual prediction test to verify endpoint responsiveness
+
 ### Key Environment Variables
 ```bash
 PROJECT_ID=your-project-id
