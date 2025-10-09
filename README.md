@@ -223,16 +223,26 @@ ENDPOINT_ID=your-endpoint-id
 - Recommended default: `Qwen/Qwen3-4B-Instruct-2507` (text-only). Fast, strong alignment, fits on a single T4 with 4‑bit.
 - If GPU memory is tight, keep 4‑bit quantization, lower batch size, or shorten `max_seq_length`.
 
-### CI/CD (Cloud Build Trigger)
-- Create a trigger to build on pushes to the training directory:
-```bash
-gcloud beta builds triggers create github \
-  --name=qwen-trainer-build \
-  --region=global \
-  --repo-owner=YOUR_GH_ORG --repo-name=YOUR_REPO \
-  --branch-pattern=main \
-  --build-config=qwen-messaging-agent/cloudbuild.yaml
-```
+### CI/CD (Cloud Build Triggers)
+Automated CI/CD is now fully implemented with multiple triggers:
+
+**Training Pipeline Trigger:**
+- Builds training and inference containers
+- Submits training job to Vertex AI
+- Deploys inference container automatically
+- Runs on changes to training code
+
+**API Deployment Trigger:**
+- Builds and deploys API to Cloud Run
+- Updates environment variables automatically
+- Runs on changes to API code
+
+**Hyperparameter Tuning Trigger:**
+- Automated HPT job submission
+- Runs on `hpt-*` branches
+- Configurable trial counts and search space
+
+See the [CI/CD Automation](#cicd-automation) section for complete setup instructions.
 
 ### Testing & Quality
 ```bash
@@ -406,6 +416,90 @@ python pipeline.py run your-project-id us-central1 your-bucket-name
 - Evaluation metrics and scores
 - Conditional endpoint deployment
 - Comprehensive logging and monitoring
+
+### Hyperparameter Tuning
+
+**Features:**
+- **Bayesian Optimization**: Uses Vertex AI's Bayesian optimization algorithm for efficient search
+- **Comprehensive Search Space**: 7 hyperparameters including learning rate, batch size, LoRA parameters, dropout, warmup ratio, weight decay
+- **Parallel Trials**: Configurable parallel trial execution (default 4 trials simultaneously)
+- **Best Trial Retrieval**: Function to get the best performing trial after completion
+- **W&B Integration**: Automatic experiment tracking for all trials
+- **Cost Optimization**: Efficient search reduces total training time and costs
+
+**Search Space:**
+- `learning_rate`: 1e-5 to 5e-4 (log scale)
+- `batch_size`: [2, 4, 8, 16]
+- `lora_r`: [16, 32, 64, 128] (LoRA rank)
+- `lora_alpha`: [16, 32, 64, 128] (LoRA alpha)
+- `lora_dropout`: 0.01 to 0.2 (linear scale)
+- `warmup_ratio`: 0.01 to 0.1 (linear scale)
+- `weight_decay`: 0.001 to 0.1 (log scale)
+
+**Run HPT:**
+```bash
+# Submit HPT job
+python hyperparameter_tuning.py \
+  --project_id your-project-id \
+  --region us-central1 \
+  --bucket_name your-bucket-name \
+  --image_uri us-central1-docker.pkg.dev/your-project/ml-training/qwen-trainer:latest \
+  --max_trials 20 \
+  --parallel_trials 4
+
+# Get best trial after completion
+python hyperparameter_tuning.py \
+  --get_best projects/your-project/locations/us-central1/hyperparameterTuningJobs/JOB_ID
+```
+
+### CI/CD Automation
+
+**Automated Pipelines:**
+- **Training Pipeline**: Builds containers, submits training, deploys inference automatically
+- **API Deployment**: Builds and deploys API to Cloud Run with environment variables
+- **HPT Pipeline**: Automated hyperparameter tuning with custom build configuration
+- **File-based Triggers**: Only runs when relevant files change (efficient resource usage)
+
+**Setup CI/CD:**
+```bash
+# Create all triggers
+python setup_cicd.py \
+  --project_id your-project-id \
+  --repo_owner your-github-username \
+  --repo_name messaging-agent \
+  --create_training \
+  --create_api \
+  --create_hpt
+
+# Or create individual triggers
+python setup_cicd.py --project_id your-project-id --repo_owner your-username --repo_name messaging-agent --create_training
+python setup_cicd.py --project_id your-project-id --repo_owner your-username --repo_name messaging-agent --create_api
+python setup_cicd.py --project_id your-project-id --repo_owner your-username --repo_name messaging-agent --create_hpt
+```
+
+**Trigger Configuration:**
+- **Training Trigger**: Runs on changes to `qwen-messaging-agent/`, `inference/`, `cloudbuild-train.yaml`
+- **API Trigger**: Runs on changes to `api/`, `cloudbuild-api.yaml`
+- **HPT Trigger**: Runs on `hpt-*` branches for hyperparameter tuning experiments
+
+**Workflow:**
+1. **Development**: Push changes to `main` branch
+2. **Training**: Automatic training pipeline runs, deploys new model
+3. **API**: Automatic API deployment with new model endpoint
+4. **HPT**: Create `hpt-experiment` branch for hyperparameter tuning
+5. **Monitoring**: All builds logged in Cloud Build console
+
+**Manual Triggers:**
+```bash
+# Trigger training pipeline manually
+gcloud builds submit --config cloudbuild-train.yaml
+
+# Trigger API deployment manually  
+gcloud builds submit --config cloudbuild-api.yaml
+
+# List existing triggers
+python setup_cicd.py --list
+```
 
 ### Integrating into an Existing Codebase
 - Call the Vertex Endpoint directly:
