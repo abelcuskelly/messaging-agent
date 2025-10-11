@@ -22,6 +22,33 @@ python deploy_to_vertex.py
 
 3. Configure API (`api/`): set `PROJECT_ID`, `REGION`, `ENDPOINT_ID` env vars and deploy to Cloud Run.
 
+### Jupyter Notebooks (Interactive Development)
+
+For interactive development, analysis, and experimentation:
+
+```bash
+# Navigate to notebooks directory
+cd notebooks
+
+# Setup Jupyter environment
+python setup_jupyter.py
+
+# Copy environment template
+cp .env.template .env
+# Edit .env with your actual values
+
+# Start Jupyter Lab
+jupyter lab
+```
+
+**Available Notebooks:**
+- `templates/01_Quick_Start.ipynb` - Introduction and basic usage
+- `analysis/02_Data_Analysis.ipynb` - Performance and conversation analysis
+- `experiments/03_Model_Experiments.ipynb` - A/B testing and model evaluation
+- `visualization/04_Interactive_Dashboard.ipynb` - Real-time monitoring dashboards
+
+See `notebooks/README.md` for detailed documentation.
+
 ### Build & Push Trainer (Artifact Registry)
 Using Cloud Build (recommended):
 ```bash
