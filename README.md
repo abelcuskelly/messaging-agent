@@ -532,7 +532,9 @@ python demo_conversation.py
           📱 Tickets sent to your mobile app!
 ```
 
-**See Full Demo**: [DEMO_EXAMPLE.md](DEMO_EXAMPLE.md) - Complete conversation transcripts with metrics and business insights
+**Full Documentation:**
+- 📖 [DEMO_EXAMPLE.md](DEMO_EXAMPLE.md) - Complete conversation transcripts with metrics and business insights
+- 🎬 [DEMO_SCRIPT.md](DEMO_SCRIPT.md) - Presentation script for customer/investor demos with talking points
 
 #### **Testing Optimizations**
 ```bash
