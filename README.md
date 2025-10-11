@@ -496,6 +496,44 @@ The API now includes automatic performance optimizations that are enabled by def
 - Tracks: cache hit rate, P50/P95/P99 latencies, tool calls, errors
 - Use for monitoring and optimization decisions
 
+#### **🎭 Product Demo - See It In Action**
+
+Experience a complete text-to-buy ticket conversation:
+
+```bash
+# Run interactive product demo
+python demo_conversation.py
+
+# Choose from scenarios:
+# 1. Simple Purchase (2-3 minutes)
+# 2. Seat Upgrade (1-2 minutes)  
+# 3. Purchase + Upgrade (complex workflow)
+# 4. All scenarios
+```
+
+**Example Conversation:**
+```
+👤 Customer: I need tickets for tonight's game
+
+🤖 Agent: Great! I found tonight's Lakers vs Warriors game at 7:00 PM.
+          Available sections:
+          🎫 Section A (Lower Bowl) - $250/seat
+          🎫 Section B (Club Level) - $180/seat
+          🎫 Section C (Upper Level) - $85/seat
+
+👤 Customer: 2 tickets in Section B please
+
+🤖 Agent: Perfect! I've placed a hold on 2 seats.
+          💰 Total: $360 | ⏱️ Hold expires in 5 minutes
+
+👤 Customer: Yes, let's proceed!
+
+🤖 Agent: 🎉 Order Confirmed! Order #ORD_789456
+          📱 Tickets sent to your mobile app!
+```
+
+**See Full Demo**: [DEMO_EXAMPLE.md](DEMO_EXAMPLE.md) - Complete conversation transcripts with metrics and business insights
+
 #### **Testing Optimizations**
 ```bash
 # Run optimization demo (no GCP required)
