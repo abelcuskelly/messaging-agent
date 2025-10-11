@@ -12,7 +12,13 @@ from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from google.cloud import aiplatform
+
+# Optional Google Cloud imports
+try:
+    from google.cloud import aiplatform
+    HAS_VERTEX_AI = True
+except ImportError:
+    HAS_VERTEX_AI = False
 
 from orchestration.agent_registry import AgentRegistry, get_registry, AgentConfig
 
@@ -138,6 +144,11 @@ class SimpleCoordinator:
                          agent_config: AgentConfig, 
                          input_data: Dict[str, Any]) -> Any:
         """Call an agent endpoint"""
+        if not HAS_VERTEX_AI:
+            # Fallback for testing without Vertex AI
+            logger.warning("Vertex AI not available, returning mock response")
+            return {"response": "Mock response (Vertex AI not installed)"}
+        
         # Initialize Vertex AI endpoint
         endpoint = aiplatform.Endpoint(agent_config.endpoint)
         
