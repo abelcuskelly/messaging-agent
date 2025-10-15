@@ -720,6 +720,19 @@ TICKETING_ENDPOINT=${ENDPOINT_ID}  # Current system
 SALES_ENDPOINT=                    # Future sales agent
 FINANCE_ENDPOINT=                  # Future finance agent
 HR_ENDPOINT=                       # Future HR agent
+
+# Evaluation System
+OPENAI_API_KEY=your-openai-key     # For LLM-as-a-judge evaluation
+EVAL_MODEL=gpt-4-turbo-preview     # GPT-4 model for evaluation
+EVAL_PROVIDER=openai               # 'openai' or 'vertexai'
+MIN_EVAL_SCORE=0.80                # Minimum score threshold
+MIN_PASS_RATE=0.85                 # Minimum pass rate
+
+# Ticket Platform Integrations
+STUBHUB_API_KEY=your-stubhub-key
+STUBHUB_API_SECRET=your-stubhub-secret
+SEATGEEK_CLIENT_ID=your-seatgeek-client-id
+TICKETMASTER_API_KEY=your-ticketmaster-key
 ```
 
 ### Infra Requirements
@@ -2311,6 +2324,162 @@ python integrations/ticket_platforms/unified_inventory.py
 # Run test suite
 pytest integrations/ticket_platforms/test_platforms.py
 ```
+
+###  🔬 Model Evaluation & Grading System
+
+Comprehensive evaluation using OpenAI LLM-as-a-judge combined with domain-specific checks.
+
+#### **Two-Layer Evaluation**
+
+**Layer 1: LLM-as-a-Judge** (OpenAI GPT-4)
+- Evaluates 6 dimensions: helpfulness, accuracy, appropriateness, tool usage, conversation flow, domain expertise
+- Natural language grading with detailed feedback
+- ~500ms per evaluation, ~$0.01 cost per test
+
+**Layer 2: Domain-Specific Checks** (Rule-based)
+- Price accuracy validation (math, formatting)
+- Inventory validation (availability claims)
+- Order flow correctness
+- Policy compliance
+- Tool usage appropriateness
+- ~5ms per evaluation, $0.00 cost
+
+#### **Quick Start**
+```bash
+# Install OpenAI
+pip install openai>=1.0.0
+
+# Set your API key
+export OPENAI_API_KEY=your-openai-api-key
+
+# Run evaluation suite
+cd evals
+python eval_suite.py
+```
+
+#### **Usage Examples**
+
+**Evaluate Agent Response:**
+```python
+from evals import LLMJudge, DomainEvaluator
+
+# LLM-as-a-judge evaluation
+judge = LLMJudge()
+result = judge.evaluate_response(
+    user_message="I need 2 tickets",
+    agent_response="Great! I found Section B for $180/seat. Total: $360",
+    tools_used=["check_inventory"]
+)
+
+print(f"Score: {result.overall_score:.2f}")
+print(f"Helpfulness: {result.helpfulness:.2f}")
+print(f"Feedback: {result.feedback}")
+
+# Domain-specific validation
+domain_eval = DomainEvaluator()
+domain_result = domain_eval.evaluate(
+    user_message="2 tickets in Section B",
+    agent_response="$180 × 2 = $360 total",
+    expected_prices={"Section B": 180.00}
+)
+
+print(f"Price check passed: {domain_result['passed']}")
+print(f"Issues: {domain_result['issues']}")
+```
+
+**Comprehensive Evaluation Suite:**
+```python
+from evals import EvaluationSuite
+
+suite = EvaluationSuite(
+    use_llm_judge=True,
+    use_domain_checks=True
+)
+
+# Evaluate batch of test cases
+results = suite.evaluate_batch(test_cases)
+report = suite.generate_report(results)
+
+print(f"Pass rate: {report['summary']['pass_rate']:.1%}")
+print(f"Avg score: {report['summary']['avg_overall_score']:.2f}")
+print(f"Recommendation: {report['recommendation']}")
+```
+
+**Pipeline Integration (Pre-Deployment):**
+```python
+from evals import PipelineEvaluator
+
+evaluator = PipelineEvaluator(project_id, region, bucket_name)
+
+# Evaluate endpoint before deploying
+report = evaluator.evaluate_endpoint(
+    endpoint_id="new-model",
+    test_cases=standard_test_cases,
+    min_score_threshold=0.85,
+    min_pass_rate=0.90
+)
+
+if report['deployment_decision']['should_deploy']:
+    print("✅ Model approved for deployment")
+else:
+    print(f"❌ {report['deployment_decision']['reason']}")
+```
+
+**A/B Testing:**
+```python
+# Compare two model versions
+comparison = evaluator.compare_endpoints(
+    endpoint_a_id="current-production-model",
+    endpoint_b_id="new-candidate-model",
+    test_cases=test_cases
+)
+
+print(f"Winner: {comparison['winner']}")
+print(f"Score difference: {comparison['score_diff']:.2f}")
+```
+
+#### **Evaluation Dimensions**
+
+| Dimension | Evaluator | What It Checks |
+|-----------|-----------|----------------|
+| Helpfulness | LLM Judge | Does it help achieve goal? |
+| Accuracy | LLM Judge | Is information correct? |
+| Appropriateness | LLM Judge | Professional tone? |
+| Tool Usage | LLM Judge | Right tools used? |
+| Conversation Flow | LLM Judge | Natural progression? |
+| Domain Expertise | LLM Judge | Ticketing knowledge? |
+| Price Accuracy | Domain | Math, formatting correct? |
+| Inventory | Domain | Valid availability claims? |
+| Order Flow | Domain | Correct step sequence? |
+| Policy Compliance | Domain | Follows policies? |
+
+#### **Performance & Cost**
+
+| Metric | Value |
+|--------|-------|
+| LLM eval time | ~500ms |
+| LLM cost | ~$0.01 per test |
+| Domain eval time | ~5ms |
+| Domain cost | $0.00 |
+| Combined | ~505ms, ~$0.01 |
+| Batch (100 tests) | ~50s, ~$1.00 |
+
+**Cost Optimization**: Run domain checks first (free), use LLM for final validation.
+
+#### **Deployment Thresholds**
+
+| Environment | Min Score | Min Pass Rate |
+|-------------|-----------|---------------|
+| Production | 0.90 | 0.95 |
+| Staging | 0.80 | 0.85 |
+| Development | 0.70 | 0.75 |
+
+#### **Documentation**
+- 📖 **Complete Guide**: [evals/README.md](evals/README.md)
+- 🤖 **LLM Judge**: `evals/llm_judge.py`
+- 🎯 **Domain Checks**: `evals/domain_specific.py`
+- 📊 **Eval Suite**: `evals/eval_suite.py`
+- 🔧 **Pipeline Integration**: `evals/pipeline_integration.py`
 
 ### Twilio SMS Integration
 
