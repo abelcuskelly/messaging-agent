@@ -43,13 +43,12 @@ gcloud builds submit --tag ${IMAGE_NAME} \
     --project ${PROJECT_ID} \
     --timeout=20m
 
-# Deploy to Cloud Run
+# Deploy to Cloud Run (with authentication required)
 echo "🚢 Deploying to Cloud Run..."
 gcloud run deploy ${SERVICE_NAME} \
     --image ${IMAGE_NAME} \
     --region ${REGION} \
     --platform managed \
-    --allow-unauthenticated \
     --memory 2Gi \
     --cpu 2 \
     --timeout 60 \

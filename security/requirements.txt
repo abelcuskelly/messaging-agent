@@ -1,0 +1,22 @@
+# Security Dependencies for Qwen Messaging Agent
+
+# Input sanitization and XSS prevention
+bleach>=6.0.0
+markupsafe>=2.1.0
+
+# Additional security libraries
+cryptography>=41.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Rate limiting and security middleware
+slowapi>=0.1.9
+python-multipart>=0.0.6
+
+# Security headers and CORS
+starlette>=0.27.0
+
+# Optional: Advanced security features
+# pyjwt>=2.8.0  # Alternative JWT library
+# argon2-cffi>=21.3.0  # Alternative password hashing
+# django-cors-headers>=4.0.0  # If using Django components

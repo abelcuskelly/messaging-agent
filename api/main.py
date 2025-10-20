@@ -16,8 +16,16 @@ import sys
 sys.path.append('..')
 from orchestration import get_optimizer, PerformanceMetrics
 
+# Import security utilities
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from security.sanitization import sanitize_user_input, sanitize_for_logging
+from security.middleware import add_security_middleware
+
 
 app = FastAPI()
+
+# Add security middleware
+add_security_middleware(app, strict_mode=True)
 
 # Configure structured logging
 logger = structlog.get_logger()
@@ -181,14 +189,17 @@ async def chat(
 
         conv_id = request.conversation_id or str(uuid.uuid4())
 
+        # Sanitize user input
+        sanitized_message = sanitize_user_input(request.message)
+        
         # OPTIMIZATION 1: Check cache for common queries
-        cached_response = optimizer.get_common_query_response(request.message)
+        cached_response = optimizer.get_common_query_response(sanitized_message)
         if cached_response:
             logger.info(
                 "Cache hit",
                 request_id=request_id,
                 conversation_id=conv_id,
-                message=request.message[:50]
+                message=sanitize_for_logging(sanitized_message[:50])
             )
             
             response_time = (time.time() - start_time) * 1000
@@ -214,8 +225,8 @@ async def chat(
         if conv_id not in conversations:
             conversations[conv_id] = []
 
-        # Add user message
-        conversations[conv_id].append({"role": "user", "content": request.message})
+        # Add user message (sanitized)
+        conversations[conv_id].append({"role": "user", "content": sanitized_message})
 
         # OPTIMIZATION 2: Compress prompt if conversation is long
         max_tokens = int(os.getenv("MAX_CONTEXT_TOKENS", "2000"))
@@ -245,9 +256,9 @@ async def chat(
 
         # OPTIMIZATION 4: Cache response for common queries
         # Only cache if it's a simple query (short message, no conversation history)
-        if len(request.message) < 200 and not request.conversation_id:
-            optimizer.cache_response(request.message, response_text)
-            logger.info("Response cached", query=request.message[:50])
+        if len(sanitized_message) < 200 and not request.conversation_id:
+            optimizer.cache_response(sanitized_message, response_text)
+            logger.info("Response cached", query=sanitize_for_logging(sanitized_message[:50]))
 
         # Add assistant response to history
         conversations[conv_id].append({"role": "assistant", "content": response_text})
@@ -261,7 +272,7 @@ async def chat(
             request_id=request_id,
             conversation_id=conv_id,
             duration=duration,
-            message_length=len(request.message),
+            message_length=len(sanitized_message),
             response_length=len(response_text),
             cached=cached,
             compressed=len(compressed_messages) < len(conversations[conv_id])

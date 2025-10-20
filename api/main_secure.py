@@ -419,7 +419,7 @@ async def startup_event():
             admin_user = UserCreate(
                 username="admin",
                 email="admin@example.com",
-                password="admin123",  # Change this!
+                password=os.getenv("ADMIN_PASSWORD", secrets.token_urlsafe(16)),
                 full_name="System Administrator"
             )
             user = auth_manager.create_user(admin_user)
@@ -434,6 +434,9 @@ async def startup_event():
                     ex=86400 * 30
                 )
             logger.info("Default admin user created")
+            admin_password = os.getenv("ADMIN_PASSWORD", secrets.token_urlsafe(16))
+            print(f"🔑 Admin password: {admin_password}")
+            print("⚠️  Change this password immediately!")
         except:
             pass  # User already exists
         

@@ -82,13 +82,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add CORS
+# Add CORS with security restrictions
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=os.getenv("ALLOWED_ORIGINS", "https://yourdomain.com").split(","),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
 
 # Add telemetry middleware

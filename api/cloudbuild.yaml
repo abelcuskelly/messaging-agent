@@ -34,7 +34,6 @@ steps:
       - '${_REGION}'
       - '--platform'
       - 'managed'
-      - '--allow-unauthenticated'
       - '--memory'
       - '2Gi'
       - '--cpu'
