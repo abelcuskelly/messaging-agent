@@ -26,3 +26,6 @@ markupsafe>=2.1.0
 cryptography>=41.0.0
 slowapi>=0.1.9
 
+# Twilio SMS integration
+twilio>=8.10.0
+

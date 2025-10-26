@@ -21,11 +21,25 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from security.sanitization import sanitize_user_input, sanitize_for_logging
 from security.middleware import add_security_middleware
 
+# Import Twilio SMS routes (if available)
+try:
+    from integrations.twilio_routes import router as twilio_router
+    TWILIO_ENABLED = True
+except ImportError:
+    print("⚠️  Twilio integration not available. Install twilio package.")
+    TWILIO_ENABLED = False
+    twilio_router = None
+
 
 app = FastAPI()
 
 # Add security middleware
 add_security_middleware(app, strict_mode=True)
+
+# Include Twilio SMS routes (if available)
+if TWILIO_ENABLED and twilio_router:
+    app.include_router(twilio_router)
+    logger.info("Twilio SMS integration enabled")
 
 # Configure structured logging
 logger = structlog.get_logger()
