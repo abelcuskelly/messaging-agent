@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Chat Widget - Demo Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .demo-section {
+            margin-bottom: 40px;
+        }
+        
+        .demo-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .config-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .integration-code {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        
+        .copy-btn {
+            background: #48bb78;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .preview-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 Qwen Chat Widget</h1>
+            <p>Easy integration for your website</p>
+        </header>
+        
+        <div class="content">
+            <!-- Configuration -->
+            <div class="demo-section">
+                <h2>🎨 Customize Your Widget</h2>
+                
+                <div class="config-panel">
+                    <div class="form-group">
+                        <label>API URL:</label>
+                        <input type="text" id="apiUrl" value="https://your-api.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>API Key:</label>
+                        <input type="text" id="apiKey" value="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Widget Position:</label>
+                        <select id="position">
+                            <option value="bottom-right">Bottom Right</option>
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="top-left">Top Left</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Title:</label>
+                        <input type="text" id="title" value="Chat with us">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Subtitle:</label>
+                        <input type="text" id="subtitle" value="Ask us anything">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Greeting Message:</label>
+                        <input type="text" id="greeting" value="Hi! How can we help you today?">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Primary Color:</label>
+                        <input type="color" id="primaryColor" value="#667eea">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Secondary Color:</label>
+                        <input type="color" id="secondaryColor" value="#764ba2">
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="generateCode()">📋 Generate Integration Code</button>
+                </div>
+            </div>
+            
+            <!-- Integration Code -->
+            <div class="demo-section">
+                <h2>💻 Integration Code</h2>
+                <p>Copy and paste this code into your website's &lt;head&gt; section:</p>
+                
+                <div class="integration-code" id="codeOutput">
+                    <!-- Code will be generated here -->
+                </div>
+                
+                <button class="copy-btn" onclick="copyCode()">📋 Copy Code</button>
+            </div>
+            
+            <!-- Features -->
+            <div class="demo-section">
+                <h2>✨ Features</h2>
+                
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>🎨 Customizable</h3>
+                        <p>Match your brand colors and styling</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>📱 Responsive</h3>
+                        <p>Works on desktop and mobile</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>⚡ Fast</h3>
+                        <p>Lightweight and optimized</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>🔒 Secure</h3>
+                        <p>API key authentication</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>🎯 Easy</h3>
+                        <p>One-line integration</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h3>💬 Real-time</h3>
+                        <p>Instant messaging with your AI</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview -->
+            <div class="demo-section">
+                <h2>👀 Live Preview</h2>
+                <div class="note">
+                    <strong>📝 Note:</strong> The chat widget will appear as a floating button on this page. Click it to test!
+                </div>
+                
+                <div class="preview-section">
+                    <p>This is your website. Scroll down to see the widget in action!</p>
+                    <p style="margin-top: 20px; color: #666;">
+                        The widget will appear as a floating button based on your selected position.
+                        Click it to open the chat interface.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Usage Instructions -->
+            <div class="demo-section">
+                <h2>📚 Quick Start</h2>
+                <div class="note">
+                    <strong>🚀 Integration Steps:</strong><br>
+                    1. Configure your API URL and key<br>
+                    2. Click "Generate Integration Code"<br>
+                    3. Copy the generated code<br>
+                    4. Paste it into your website's &lt;head&gt; section<br>
+                    5. The chat widget will appear automatically!
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include Chat Widget -->
+    <script>
+        // Auto-generate code on load
+        window.onload = function() {
+            generateCode();
+        };
+        
+        function generateCode() {
+            const config = {
+                apiUrl: document.getElementById('apiUrl').value,
+                apiKey: document.getElementById('apiKey').value,
+                position: document.getElementById('position').value,
+                title: document.getElementById('title').value,
+                subtitle: document.getElementById('subtitle').value,
+                greeting: document.getElementById('greeting').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value
+            };
+            
+            const code = `
+<script>
+  window.qwenConfig = ${JSON.stringify(config, null, 2)};
+</script>
+<script src="https://cdn.yoursite.com/widget/qwen-plugin.js"></script>
+            `.trim();
+            
+            document.getElementById('codeOutput').textContent = code;
+            
+            // Apply to live widget if it exists
+            if (window.qwenWidget) {
+                window.qwenWidget.closeChat();
+                window.qwenWidget.config = config;
+                window.qwenWidget.init();
+            }
+        }
+        
+        function copyCode() {
+            const code = document.getElementById('codeOutput').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ Code copied to clipboard!');
+            });
+        }
+    </script>
+    
+    <!-- Include chat widget with demo config -->
+    <script>
+        window.qwenConfig = {
+            apiUrl: 'http://localhost:8000',
+            apiKey: '',
+            position: 'bottom-right',
+            title: 'Chat with Qwen',
+            subtitle: 'AI-powered customer support',
+            greeting: 'Hi! I\'m Qwen, your AI assistant. How can I help you today?',
+            primaryColor: '#667eea',
+            secondaryColor: '#764ba2',
+            autoOpen: false,
+            showPoweredBy: true
+        };
+    </script>
+    
+    <!-- This would point to your actual widget files -->
+    <script src="../widget/chat-widget.js"></script>
+</body>
+</html>
