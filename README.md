@@ -2618,6 +2618,76 @@ python server.py
 
 **Complete Documentation**: See [sms_portal/README.md](sms_portal/README.md)
 
+### 📱 Social Media Integration
+
+**Multi-Platform Customer Engagement**: Connect with customers across Twitter, LinkedIn, and Facebook (including Instagram)!
+
+**Platforms Supported:**
+- ✅ **Twitter/X**: Mentions, DMs, tweets, hashtag monitoring
+- ✅ **LinkedIn**: Professional messaging, posts, connection requests
+- ✅ **Facebook & Instagram**: Messenger, DMs, page comments
+
+**Key Features:**
+- **Unified Interface**: Single manager for all platforms
+- **Auto-Respond**: AI-powered automatic responses
+- **Brand Monitoring**: Track mentions across all platforms
+- **Multi-Platform Campaigns**: Post to multiple platforms at once
+- **Welcome Messages**: Automated onboarding
+- **Statistics & Analytics**: Platform-specific and unified stats
+
+**Quick Start:**
+```python
+from integrations.social.manager import SocialMediaManager
+
+# Initialize all platforms
+manager = SocialMediaManager()
+
+# Get messages from all platforms
+messages = manager.get_all_messages()
+
+# Auto-respond with AI
+response = manager.auto_respond_to_message('twitter', message_id, user_id)
+
+# Monitor brand mentions
+mentions = manager.monitor_brand_mentions('yourbrand')
+
+# Create social media campaign
+results = manager.create_social_campaign("New tickets available!", ['twitter', 'facebook'])
+```
+
+**API Endpoints:**
+- `GET /social/platforms` - List available platforms
+- `GET /social/messages` - Get messages from all platforms
+- `POST /social/send` - Send message to platform
+- `POST /social/reply/{platform}/{message_id}` - Reply to message
+- `POST /social/auto-respond/{platform}` - AI auto-response
+- `GET /social/mentions/{keyword}` - Monitor brand mentions
+- `POST /social/campaign` - Create multi-platform campaign
+- `GET /social/stats` - Unified statistics
+
+**Configuration:**
+```bash
+# Twitter
+TWITTER_API_KEY=your_key
+TWITTER_API_SECRET=your_secret
+TWITTER_ACCESS_TOKEN=your_token
+TWITTER_ACCESS_TOKEN_SECRET=your_token_secret
+TWITTER_BEARER_TOKEN=your_bearer_token
+
+# LinkedIn
+LINKEDIN_CLIENT_ID=your_client_id
+LINKEDIN_CLIENT_SECRET=your_client_secret
+LINKEDIN_ACCESS_TOKEN=your_access_token
+
+# Facebook
+FACEBOOK_APP_ID=your_app_id
+FACEBOOK_APP_SECRET=your_app_secret
+FACEBOOK_PAGE_ACCESS_TOKEN=your_page_token
+INSTAGRAM_BUSINESS_ACCOUNT_ID=your_instagram_account_id
+```
+
+**Complete Documentation**: See [integrations/social/README.md](integrations/social/README.md)
+
 **SMS Templates:**
 ```python
 from integrations.twilio_integration import SMSTemplates
