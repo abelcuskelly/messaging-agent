@@ -1701,6 +1701,51 @@ With Batching (10 per batch):
 - Savings: 85% time, 90% cost
 ```
 
+### 🎛️ Admin Panel
+
+**Comprehensive Management Dashboard**: Monitor, configure, and analyze your messaging agent system from a unified interface!
+
+**Features:**
+- **Real-time Dashboard**: Monitor conversations, users, response times, and success rates
+- **System Configuration**: Switch models, adjust parameters, manage rate limits
+- **User Management**: Create accounts, manage API keys, set permissions
+- **Analytics & Insights**: Deep dive into conversation patterns and performance
+- **Billing & Usage**: Track API calls, tokens, costs, and set budget alerts
+- **Alert Management**: Configure custom alerts for errors, performance, usage
+- **Model Management**: Switch between providers, run A/B tests, track versions
+- **WebSocket Updates**: Real-time metrics and status updates
+
+**Quick Start:**
+```bash
+# Start the admin panel (one command)
+cd admin_panel
+./start_admin.sh
+
+# Access the dashboard
+open http://localhost:8080
+
+# API documentation
+open http://localhost:8000/docs
+```
+
+**Key Sections:**
+- **Dashboard**: Real-time metrics, health status, recent conversations
+- **Configuration**: Model settings, rate limits, auto-scaling
+- **Analytics**: Conversation analytics, performance metrics, user behavior
+- **Billing**: Usage tracking, cost analysis, budget management
+- **Alerts**: Custom alerts, notifications, escalation rules
+- **Users**: Account management, API keys, permissions
+
+**Security:**
+- Bearer token authentication
+- Role-based access control (admin/operator/viewer)
+- Audit logging for all actions
+- HTTPS enforcement in production
+
+📚 **[Full Admin Panel Documentation →](admin_panel/README.md)**
+
+---
+
 ### 🌐 Embeddable Chat Widget
 
 **Complete Web Integration**: Add AI chat to any website with one line of code!

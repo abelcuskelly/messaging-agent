@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messaging Agent Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .sidebar-item:hover { background-color: rgba(99, 102, 241, 0.1); }
+        .metric-card { transition: transform 0.2s; }
+        .metric-card:hover { transform: translateY(-2px); }
+        .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-healthy { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-error { background-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Main Container -->
+    <div class="flex h-screen">
+        
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-lg">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <i class="fas fa-robot text-indigo-600 mr-2"></i>
+                    Admin Panel
+                </h1>
+            </div>
+            
+            <nav class="mt-6">
+                <a href="#dashboard" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="#conversations" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-comments w-5"></i>
+                    <span class="ml-3">Conversations</span>
+                </a>
+                <a href="#configuration" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-cog w-5"></i>
+                    <span class="ml-3">Configuration</span>
+                </a>
+                <a href="#users" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-users w-5"></i>
+                    <span class="ml-3">Users</span>
+                </a>
+                <a href="#analytics" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-chart-bar w-5"></i>
+                    <span class="ml-3">Analytics</span>
+                </a>
+                <a href="#billing" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-credit-card w-5"></i>
+                    <span class="ml-3">Billing</span>
+                </a>
+                <a href="#alerts" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-bell w-5"></i>
+                    <span class="ml-3">Alerts</span>
+                </a>
+                <a href="#models" class="sidebar-item flex items-center px-6 py-3 text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-brain w-5"></i>
+                    <span class="ml-3">Models</span>
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto">
+            
+            <!-- Top Bar -->
+            <div class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">System Overview</h2>
+                    <span id="connection-status" class="ml-4 flex items-center text-sm text-green-600">
+                        <span class="status-dot status-healthy mr-2"></span>
+                        Connected
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="refreshData()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="exportData()" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="p-6">
+                
+                <!-- Metrics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="metric-card bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Conversations</p>
+                                <p id="total-conversations" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                                <p class="text-green-600 text-sm mt-1">
+                                    <i class="fas fa-arrow-up"></i> 12% from last week
+                                </p>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-comments text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Active Users</p>
+                                <p id="active-users" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                                <p class="text-green-600 text-sm mt-1">
+                                    <i class="fas fa-arrow-up"></i> 8% from last week
+                                </p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-users text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Avg Response Time</p>
+                                <p id="avg-response-time" class="text-3xl font-bold text-gray-800 mt-2">0ms</p>
+                                <p class="text-green-600 text-sm mt-1">
+                                    <i class="fas fa-arrow-down"></i> 15% improvement
+                                </p>
+                            </div>
+                            <div class="bg-yellow-100 p-3 rounded-full">
+                                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card bg-white p-6 rounded-lg shadow">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Success Rate</p>
+                                <p id="success-rate" class="text-3xl font-bold text-gray-800 mt-2">0%</p>
+                                <p class="text-green-600 text-sm mt-1">
+                                    <i class="fas fa-arrow-up"></i> 2% from last week
+                                </p>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <i class="fas fa-check-circle text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Conversation Volume Chart -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Conversation Volume (24h)</h3>
+                        <canvas id="volume-chart"></canvas>
+                    </div>
+                    
+                    <!-- System Health -->
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">System Health</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">API Service</span>
+                                <span class="flex items-center">
+                                    <span class="status-dot status-healthy mr-2"></span>
+                                    <span class="text-green-600">Healthy</span>
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Database</span>
+                                <span class="flex items-center">
+                                    <span class="status-dot status-healthy mr-2"></span>
+                                    <span class="text-green-600">Healthy</span>
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Redis Cache</span>
+                                <span class="flex items-center">
+                                    <span class="status-dot status-healthy mr-2"></span>
+                                    <span class="text-green-600">Healthy</span>
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600">Model Endpoint</span>
+                                <span class="flex items-center">
+                                    <span class="status-dot status-healthy mr-2"></span>
+                                    <span class="text-green-600">Healthy</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Conversations -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-800">Recent Conversations</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intent</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="conversations-table" class="bg-white divide-y divide-gray-200">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Configuration Section -->
+            <div id="configuration" class="p-6 hidden">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-6">System Configuration</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">LLM Provider</label>
+                            <select id="llm-provider" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500">
+                                <option value="anthropic">Anthropic (Claude)</option>
+                                <option value="openai">OpenAI (GPT)</option>
+                                <option value="bedrock">AWS Bedrock</option>
+                                <option value="qwen">Qwen (Custom)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                            <select id="model-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500">
+                                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Temperature</label>
+                            <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Max Tokens</label>
+                            <input type="number" id="max-tokens" min="100" max="8000" value="2000" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Rate Limit (req/min)</label>
+                            <input type="number" id="rate-limit" min="1" max="1000" value="100" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Auto Scaling</label>
+                            <div class="flex items-center space-x-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="auto-scaling" class="mr-2" checked>
+                                    <span>Enabled</span>
+                                </label>
+                                <input type="number" id="min-instances" min="1" max="10" value="1" placeholder="Min"
+                                    class="w-20 px-2 py-1 border border-gray-300 rounded">
+                                <input type="number" id="max-instances" min="1" max="100" value="10" placeholder="Max"
+                                    class="w-20 px-2 py-1 border border-gray-300 rounded">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end space-x-4">
+                        <button onclick="saveConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                            Save Configuration
+                        </button>
+                        <button onclick="resetConfig()" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                            Reset to Default
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000/api';
+        const AUTH_TOKEN = localStorage.getItem('admin_token') || 'admin-secret-token';
+        
+        // WebSocket connection
+        let ws = null;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initWebSocket();
+            loadDashboardData();
+            setupNavigation();
+        });
+        
+        // WebSocket initialization
+        function initWebSocket() {
+            ws = new WebSocket('ws://localhost:8000/ws');
+            
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                updateConnectionStatus('connected');
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleRealtimeUpdate(data);
+            };
+            
+            ws.onclose = function() {
+                console.log('WebSocket disconnected');
+                updateConnectionStatus('disconnected');
+                // Reconnect after 5 seconds
+                setTimeout(initWebSocket, 5000);
+            };
+        }
+        
+        // Handle real-time updates
+        function handleRealtimeUpdate(data) {
+            if (data.type === 'metrics_update') {
+                // Update metrics in real-time
+                if (data.active_conversations !== undefined) {
+                    animateValue('active-users', data.active_conversations);
+                }
+                if (data.response_time !== undefined) {
+                    document.getElementById('avg-response-time').textContent = data.response_time + 'ms';
+                }
+            }
+        }
+        
+        // Update connection status
+        function updateConnectionStatus(status) {
+            const statusEl = document.getElementById('connection-status');
+            if (status === 'connected') {
+                statusEl.innerHTML = '<span class="status-dot status-healthy mr-2"></span>Connected';
+                statusEl.className = 'ml-4 flex items-center text-sm text-green-600';
+            } else {
+                statusEl.innerHTML = '<span class="status-dot status-error mr-2"></span>Disconnected';
+                statusEl.className = 'ml-4 flex items-center text-sm text-red-600';
+            }
+        }
+        
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const response = await axios.get(`${API_BASE}/analytics/overview`, {
+                    headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+                });
+                
+                const data = response.data;
+                
+                // Update metrics
+                animateValue('total-conversations', data.overview.total_conversations);
+                animateValue('active-users', data.overview.active_users);
+                document.getElementById('avg-response-time').textContent = data.overview.avg_response_time + 'ms';
+                document.getElementById('success-rate').textContent = data.overview.success_rate + '%';
+                
+                // Update volume chart
+                updateVolumeChart(data.hourly_stats);
+                
+                // Update health status
+                updateHealthStatus(data.health);
+                
+                // Load recent conversations
+                loadRecentConversations();
+                
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+            }
+        }
+        
+        // Load recent conversations
+        async function loadRecentConversations() {
+            try {
+                const response = await axios.get(`${API_BASE}/conversations/recent`, {
+                    headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+                });
+                
+                const tbody = document.getElementById('conversations-table');
+                tbody.innerHTML = '';
+                
+                response.data.conversations.forEach(conv => {
+                    const row = `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${conv.id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${conv.user_id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${conv.intent}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${conv.messages}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    ${conv.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                    ${conv.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(conv.started_at).toLocaleTimeString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="viewConversation('${conv.id}')" class="text-indigo-600 hover:text-indigo-900">View</button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+                
+            } catch (error) {
+                console.error('Failed to load conversations:', error);
+            }
+        }
+        
+        // Update volume chart
+        function updateVolumeChart(data) {
+            const ctx = document.getElementById('volume-chart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => `${d.hour}:00`),
+                    datasets: [{
+                        label: 'Conversations',
+                        data: data.map(d => d.count),
+                        borderColor: 'rgb(99, 102, 241)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+        
+        // Update health status
+        function updateHealthStatus(health) {
+            // Implementation for updating health indicators
+        }
+        
+        // Animate value changes
+        function animateValue(id, value) {
+            const element = document.getElementById(id);
+            const current = parseInt(element.textContent) || 0;
+            const increment = (value - current) / 20;
+            let step = 0;
+            
+            const timer = setInterval(() => {
+                step++;
+                element.textContent = Math.round(current + increment * step);
+                if (step >= 20) {
+                    element.textContent = value;
+                    clearInterval(timer);
+                }
+            }, 30);
+        }
+        
+        // Setup navigation
+        function setupNavigation() {
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = this.getAttribute('href').substring(1);
+                    showSection(target);
+                });
+            });
+        }
+        
+        // Show section
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('[id^="dashboard"], [id^="configuration"]').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(section);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+            
+            // Update active sidebar item
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('bg-indigo-50', 'text-indigo-600');
+                if (item.getAttribute('href') === '#' + section) {
+                    item.classList.add('bg-indigo-50', 'text-indigo-600');
+                }
+            });
+        }
+        
+        // Refresh data
+        function refreshData() {
+            loadDashboardData();
+        }
+        
+        // Export data
+        async function exportData() {
+            try {
+                const response = await axios.get(`${API_BASE}/export/conversations?format=csv`, {
+                    headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+                });
+                
+                // Create download link
+                const blob = new Blob([response.data.data], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'conversations_export.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+            } catch (error) {
+                console.error('Failed to export data:', error);
+            }
+        }
+        
+        // Save configuration
+        async function saveConfig() {
+            const config = {
+                provider: document.getElementById('llm-provider').value,
+                model: document.getElementById('model-name').value,
+                temperature: parseFloat(document.getElementById('temperature').value),
+                max_tokens: parseInt(document.getElementById('max-tokens').value),
+                rate_limit: parseInt(document.getElementById('rate-limit').value),
+                auto_scaling: document.getElementById('auto-scaling').checked,
+                min_instances: parseInt(document.getElementById('min-instances').value),
+                max_instances: parseInt(document.getElementById('max-instances').value)
+            };
+            
+            try {
+                await axios.put(`${API_BASE}/config`, config, {
+                    headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
+                });
+                
+                alert('Configuration saved successfully!');
+            } catch (error) {
+                console.error('Failed to save configuration:', error);
+                alert('Failed to save configuration');
+            }
+        }
+        
+        // Reset configuration
+        function resetConfig() {
+            document.getElementById('llm-provider').value = 'anthropic';
+            document.getElementById('model-name').value = 'claude-3-sonnet';
+            document.getElementById('temperature').value = '0.7';
+            document.getElementById('max-tokens').value = '2000';
+            document.getElementById('rate-limit').value = '100';
+            document.getElementById('auto-scaling').checked = true;
+            document.getElementById('min-instances').value = '1';
+            document.getElementById('max-instances').value = '10';
+        }
+        
+        // View conversation details
+        function viewConversation(id) {
+            // Implementation for viewing conversation details
+            console.log('View conversation:', id);
+        }
+    </script>
+</body>
+</html>
