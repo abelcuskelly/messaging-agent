@@ -20,6 +20,24 @@ import pandas as pd
 import plotly.graph_objs as go
 import plotly.io as pio
 
+# Import advanced features
+try:
+    from custom_dashboards import DashboardManager, CustomDashboard, DashboardWidget, DASHBOARD_TEMPLATES
+    from webhook_manager import WebhookManager, WebhookConfig, WebhookEvent
+    from automated_reports import ReportManager, ReportConfig, ReportFrequency, ReportFormat
+    from business_integrations import (
+        BusinessIntegrationManager, 
+        IntegrationType, 
+        AlertSeverity,
+        SlackConfig,
+        PagerDutyConfig,
+        TeamsConfig
+    )
+    ADVANCED_FEATURES_AVAILABLE = True
+except ImportError:
+    ADVANCED_FEATURES_AVAILABLE = False
+    logger.warning("Advanced features not available - install dependencies")
+
 # Initialize logger
 logger = structlog.get_logger()
 
@@ -594,6 +612,219 @@ async def clear_cache(token: str = Depends(verify_admin_token)):
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+# ================== Advanced Features (Custom Dashboards) ==================
+
+if ADVANCED_FEATURES_AVAILABLE:
+    
+    dashboard_manager = None
+    webhook_manager = None
+    report_manager = None
+    integration_manager = None
+    
+    async def get_dashboard_manager():
+        global dashboard_manager
+        if not dashboard_manager:
+            r = await get_redis()
+            dashboard_manager = DashboardManager(r)
+        return dashboard_manager
+    
+    async def get_webhook_manager():
+        global webhook_manager
+        if not webhook_manager:
+            r = await get_redis()
+            webhook_manager = WebhookManager(r)
+        return webhook_manager
+    
+    async def get_report_manager():
+        global report_manager
+        if not report_manager:
+            r = await get_redis()
+            report_manager = ReportManager(r)
+        return report_manager
+    
+    async def get_integration_manager():
+        global integration_manager
+        if not integration_manager:
+            r = await get_redis()
+            integration_manager = BusinessIntegrationManager(r)
+        return integration_manager
+    
+    # Custom Dashboards
+    @app.post("/api/dashboards")
+    async def create_custom_dashboard(
+        dashboard: CustomDashboard,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Create a custom dashboard"""
+        manager = await get_dashboard_manager()
+        return await manager.create_dashboard(dashboard)
+    
+    @app.get("/api/dashboards/{dashboard_id}")
+    async def get_custom_dashboard(
+        dashboard_id: str,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Get dashboard configuration"""
+        manager = await get_dashboard_manager()
+        dashboard = await manager.get_dashboard(dashboard_id)
+        if not dashboard:
+            raise HTTPException(status_code=404, detail="Dashboard not found")
+        return {"dashboard": dashboard}
+    
+    @app.get("/api/dashboards")
+    async def list_custom_dashboards(
+        user: str = "admin",
+        token: str = Depends(verify_admin_token)
+    ):
+        """List user's dashboards"""
+        manager = await get_dashboard_manager()
+        dashboards = await manager.list_user_dashboards(user)
+        return {"dashboards": dashboards}
+    
+    @app.get("/api/dashboards/templates")
+    async def get_dashboard_templates(token: str = Depends(verify_admin_token)):
+        """Get predefined dashboard templates"""
+        return {"templates": DASHBOARD_TEMPLATES}
+    
+    # Webhooks
+    @app.post("/api/webhooks")
+    async def create_webhook(
+        webhook: WebhookConfig,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Create a new webhook"""
+        manager = await get_webhook_manager()
+        return await manager.create_webhook(webhook)
+    
+    @app.get("/api/webhooks")
+    async def list_webhooks(token: str = Depends(verify_admin_token)):
+        """List all webhooks"""
+        manager = await get_webhook_manager()
+        webhooks = await manager.list_webhooks()
+        return {"webhooks": webhooks}
+    
+    @app.post("/api/webhooks/{webhook_id}/test")
+    async def test_webhook(
+        webhook_id: str,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Test a webhook"""
+        manager = await get_webhook_manager()
+        return await manager.test_webhook(webhook_id)
+    
+    @app.get("/api/webhooks/{webhook_id}/stats")
+    async def get_webhook_stats(
+        webhook_id: str,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Get webhook delivery statistics"""
+        manager = await get_webhook_manager()
+        stats = await manager.get_webhook_stats(webhook_id)
+        return {"stats": stats}
+    
+    # Automated Reports
+    @app.post("/api/reports")
+    async def create_report(
+        report: ReportConfig,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Create a scheduled report"""
+        manager = await get_report_manager()
+        return await manager.create_report(report)
+    
+    @app.get("/api/reports")
+    async def list_reports(token: str = Depends(verify_admin_token)):
+        """List all reports"""
+        manager = await get_report_manager()
+        reports = await manager.list_reports()
+        return {"reports": reports}
+    
+    @app.post("/api/reports/{report_id}/generate")
+    async def generate_report_now(
+        report_id: str,
+        background_tasks: BackgroundTasks,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Generate a report immediately"""
+        manager = await get_report_manager()
+        background_tasks.add_task(manager.generate_report, report_id)
+        return {"status": "success", "message": "Report generation started"}
+    
+    # Business Integrations
+    @app.post("/api/integrations/{integration_type}/configure")
+    async def configure_integration(
+        integration_type: IntegrationType,
+        config: Dict[str, Any],
+        token: str = Depends(verify_admin_token)
+    ):
+        """Configure a business tool integration"""
+        manager = await get_integration_manager()
+        return await manager.configure_integration(integration_type, config)
+    
+    @app.post("/api/integrations/{integration_type}/test")
+    async def test_integration(
+        integration_type: IntegrationType,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Test an integration"""
+        manager = await get_integration_manager()
+        return await manager.test_integration(integration_type)
+    
+    @app.get("/api/integrations")
+    async def list_integrations(token: str = Depends(verify_admin_token)):
+        """List all configured integrations"""
+        manager = await get_integration_manager()
+        integrations = await manager.list_integrations()
+        return {"integrations": integrations}
+    
+    @app.post("/api/integrations/slack/notify")
+    async def send_slack_notification(
+        title: str,
+        message: str,
+        severity: AlertSeverity = AlertSeverity.INFO,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Send a Slack notification"""
+        manager = await get_integration_manager()
+        r = await get_redis()
+        integrations = await r.hgetall("integrations:config")
+        
+        if "slack" not in integrations:
+            raise HTTPException(status_code=400, detail="Slack not configured")
+        
+        config = SlackConfig(**json.loads(integrations["slack"]))
+        return await manager.send_slack_notification(config, title, message, severity)
+    
+    @app.post("/api/integrations/pagerduty/incident")
+    async def create_pagerduty_incident(
+        title: str,
+        description: str,
+        severity: AlertSeverity,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Create a PagerDuty incident"""
+        manager = await get_integration_manager()
+        r = await get_redis()
+        integrations = await r.hgetall("integrations:config")
+        
+        if "pagerduty" not in integrations:
+            raise HTTPException(status_code=400, detail="PagerDuty not configured")
+        
+        config = PagerDutyConfig(**json.loads(integrations["pagerduty"]))
+        return await manager.create_pagerduty_incident(config, title, description, severity)
+    
+    @app.post("/api/integrations/broadcast")
+    async def broadcast_alert(
+        title: str,
+        message: str,
+        severity: AlertSeverity,
+        details: Optional[Dict[str, Any]] = None,
+        token: str = Depends(verify_admin_token)
+    ):
+        """Broadcast alert to all configured platforms"""
+        manager = await get_integration_manager()
+        return await manager.broadcast_alert(title, message, severity, details)
 
 if __name__ == "__main__":
     import uvicorn
