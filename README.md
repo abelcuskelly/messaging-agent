@@ -2688,6 +2688,72 @@ INSTAGRAM_BUSINESS_ACCOUNT_ID=your_instagram_account_id
 
 **Complete Documentation**: See [integrations/social/README.md](integrations/social/README.md)
 
+### 💳 Stripe Payment Integration
+
+**Secure Payment Processing**: Process payments directly through the messaging agent!
+
+**Features:**
+- ✅ **Payment Intents**: Direct payment processing
+- ✅ **Checkout Sessions**: Hosted Stripe checkout pages
+- ✅ **Customer Management**: Create and manage Stripe customers
+- ✅ **Refunds**: Full and partial refund support
+- ✅ **Webhook Integration**: Automatic payment status updates
+- ✅ **Metadata Support**: Attach order/ticket info to payments
+- ✅ **Security**: PCI-compliant payment processing
+
+**Quick Start:**
+```python
+from integrations.payments.stripe_client import StripePaymentManager
+
+# Initialize payment manager
+payment_manager = StripePaymentManager()
+
+# Create checkout session for tickets
+session = payment_manager.create_checkout_session(
+    items=[
+        PaymentItem(
+            name='Lakers vs Warriors',
+            description='Section 101, Row 5',
+            amount=150.00,
+            quantity=2
+        )
+    ],
+    success_url='https://yoursite.com/success',
+    cancel_url='https://yoursite.com/cancel',
+    customer_email='customer@example.com'
+)
+
+# Send checkout link to customer
+print(f"Checkout URL: {session.url}")
+```
+
+**API Endpoints:**
+- `POST /payments/intent/create` - Create payment intent
+- `POST /payments/checkout/create` - Create checkout session
+- `GET /payments/intent/{id}/status` - Get payment status
+- `POST /payments/intent/{id}/cancel` - Cancel payment
+- `POST /payments/refund` - Refund payment
+- `POST /payments/customer/create` - Create customer
+- `GET /payments/customer/{id}` - Get customer
+- `POST /payments/webhook` - Stripe webhook handler
+
+**Configuration:**
+```bash
+# Stripe Keys
+STRIPE_SECRET_KEY=sk_test_your_secret_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+```
+
+**Get Your Keys:**
+1. Go to [dashboard.stripe.com](https://dashboard.stripe.com)
+2. Developers → API Keys
+3. Copy Secret key (`sk_...`)
+4. Copy Publishable key (`pk_...`)
+5. Set up webhook and copy signing secret
+
+**Complete Documentation**: See [integrations/payments/README.md](integrations/payments/README.md)
+
 **SMS Templates:**
 ```python
 from integrations.twilio_integration import SMSTemplates
