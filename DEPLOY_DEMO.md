@@ -1,19 +1,19 @@
-# Deploy Demo to AI-Agency Repository
+# Deploy Demo to Your Website
 
 ## Quick Deploy Steps
 
-Run these commands in your terminal to add the demo to your AI-Agency website:
+Run these commands in your terminal to add the demo to your website:
 
 ```bash
-# 1. Clone AI-Agency repo
+# 1. Clone your website repository
 cd ~/Desktop
-git clone https://github.com/abelcuskelly/AI-Agency.git
+git clone https://github.com/Company_Github_Repository/Company_Website.git
 
 # 2. Copy the demo file
-cp "Work/messaging agent/demo.html" AI-Agency/demo.html
+cp /path/to/messaging-agent/demo.html Company_Website/demo.html
 
 # 3. Commit and push
-cd AI-Agency
+cd Company_Website
 git add demo.html
 git commit -m "Add AI agent interactive demo page"
 git push origin main
@@ -22,11 +22,11 @@ git push origin main
 ## Result
 
 After deployment, the demo will be live at:
-**https://abelcuskelly.github.io/AI-Agency/demo.html**
+**https://company.github.io/demo.html**
 
 ## Add Link to Main Website
 
-Edit `AI-Agency/index.html` and add a "Try Demo" button in the hero section:
+Edit `index.html` and add a "Try Demo" button in your hero or CTA section:
 
 ```html
 <a href="demo.html" class="cta-button">
@@ -37,7 +37,7 @@ Edit `AI-Agency/index.html` and add a "Try Demo" button in the hero section:
 ## Verify
 
 Visit the demo:
-- https://abelcuskelly.github.io/AI-Agency/demo.html
+- https://company.github.io/demo.html
 
 The demo showcases:
 - 4 realistic conversation scenarios
