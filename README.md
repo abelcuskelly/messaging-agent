@@ -6,11 +6,13 @@
 
 ## 🎯 Choose Your Setup
 
-### **Easy Setup** (5 minutes, No Infrastructure)
+### **Easy Setup** (5 minutes, Managed Infrastructure)
 Get started instantly with cloud APIs:
-- ✅ **Anthropic Claude** - Best reasoning and safety
-- ✅ **OpenAI GPT** - Most compatible and widely used
-- ✅ **AWS Bedrock** - Multiple models via AWS
+- ✅ **Anthropic Claude** - Best reasoning and safety (managed API)
+- ✅ **OpenAI GPT** - Most compatible and widely used (managed API)
+- ✅ **AWS Bedrock** - Multiple models via AWS (managed infrastructure)
+
+**Note**: Bedrock uses AWS infrastructure, but requires zero setup - just credentials!
 
 👉 **[See Easy Setup Guide →](EASY_SETUP.md)**
 
