@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Portal - Testing & Monitoring</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>📱 SMS Portal</h1>
+            <p>Testing & Customer Observation Dashboard</p>
+            <div class="status-badge" id="connectionStatus">
+                <span class="status-indicator"></span>
+                <span class="status-text">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Statistics Dashboard -->
+        <section class="stats-section">
+            <h2>📊 Statistics</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Sent</div>
+                    <div class="stat-value" id="totalSent">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Failed</div>
+                    <div class="stat-value" id="totalFailed">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Success Rate</div>
+                    <div class="stat-value" id="successRate">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last 24 Hours</div>
+                    <div class="stat-value" id="last24h">0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="testing">🧪 Testing</button>
+            <button class="tab-button" data-tab="messages">📧 Messages</button>
+            <button class="tab-button" data-tab="customers">👥 Customers</button>
+        </div>
+
+        <!-- Testing Panel -->
+        <section id="testingPanel" class="tab-panel active">
+            <h2>Send Test SMS</h2>
+            
+            <div class="test-form">
+                <div class="form-group">
+                    <label>Phone Number (E.164 format)</label>
+                    <input type="text" id="phoneNumber" placeholder="+15551234567">
+                </div>
+
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="messageText" placeholder="Enter your test message..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="sendTestSMS()">📤 Send Test SMS</button>
+            </div>
+
+            <div class="quick-tests">
+                <h3>Quick Tests</h3>
+                <button class="btn btn-secondary" onclick="sendTicketConfirmation()">
+                    ✅ Ticket Confirmation
+                </button>
+                <button class="btn btn-secondary" onclick="sendGameReminder()">
+                    ⏰ Game Reminder
+                </button>
+                <button class="btn btn-secondary" onclick="sendUpgradeNotification()">
+                    ⬆️ Upgrade Notification
+                </button>
+            </div>
+        </section>
+
+        <!-- Messages Panel -->
+        <section id="messagesPanel" class="tab-panel">
+            <h2>Recent Messages</h2>
+            
+            <div class="filters">
+                <input type="text" id="phoneFilter" placeholder="Filter by phone number">
+                <button class="btn btn-secondary" onclick="refreshMessages()">🔄 Refresh</button>
+            </div>
+
+            <div id="messagesList" class="messages-list">
+                <!-- Messages will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Customers Panel -->
+        <section id="customersPanel" class="tab-panel">
+            <h2>Customer Overview</h2>
+            
+            <div id="customersList" class="customers-list">
+                <!-- Customers will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Activity Feed -->
+        <section class="activity-section">
+            <h2>🔄 Real-time Activity</h2>
+            <div id="activityFeed" class="activity-feed">
+                <!-- Activity updates will appear here -->
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

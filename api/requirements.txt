@@ -29,3 +29,7 @@ slowapi>=0.1.9
 # Twilio SMS integration
 twilio>=8.10.0
 
+# SMS Portal (for testing and monitoring)
+jinja2>=3.1.0
+python-multipart>=0.0.6
+
