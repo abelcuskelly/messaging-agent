@@ -1679,6 +1679,44 @@ With Batching (10 per batch):
 - Savings: 85% time, 90% cost
 ```
 
+### 🌐 Embeddable Chat Widget
+
+**Complete Web Integration**: Add AI chat to any website with one line of code!
+
+**Features:**
+- **One-Line Integration**: Add widget to any website in seconds
+- **Fully Customizable**: Brand colors, position, messages, and styling
+- **Real-time Messaging**: Live chat with AI agent
+- **Mobile Responsive**: Perfect experience on all devices
+- **Professional UI**: Beautiful gradient design with smooth animations
+- **No Dependencies**: Lightweight and framework-agnostic
+- **Easy Configuration**: Simple JavaScript config object
+
+**Quick Start:**
+```html
+<!-- Add to your website's <head> section -->
+<script>
+  window.qwenConfig = {
+    apiUrl: 'https://your-api.com',
+    apiKey: 'your-api-key',
+    position: 'bottom-right',
+    title: 'Chat with us',
+    subtitle: 'AI-powered support'
+  };
+</script>
+<script src="https://cdn.yoursite.com/widget/qwen-plugin.js"></script>
+```
+
+**Customization:**
+- **Position**: `'bottom-right'`, `'bottom-left'`, `'top-right'`, `'top-left'`
+- **Colors**: Primary and secondary brand colors (gradient)
+- **Messages**: Title, subtitle, greeting, placeholder text
+- **Behavior**: Auto-open, show/hide footer
+
+**Complete Documentation**: See [widget/README.md](widget/README.md)
+
+**Demo Portal**: Test and configure at `widget-demo/index.html`
+
 ### Mobile SDKs (iOS & Android)
 
 **Features:**
