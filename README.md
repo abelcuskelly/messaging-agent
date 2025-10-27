@@ -2598,7 +2598,25 @@ results = sms_manager.send_bulk_sms(
     body="Special offer: 20% off all Lakers tickets!",
     batch_size=100
 )
+
+**SMS Testing & Monitoring Portal:**
+- **Web-based Dashboard**: Test SMS functionality without writing code
+- **Real-time Statistics**: Monitor SMS sent, failed, success rate
+- **Customer Observation**: View message history and customer patterns
+- **Quick Tests**: Send test SMS, confirmations, reminders with one click
+- **Message History**: Browse and filter all sent messages
+- **Customer Analytics**: Track communication patterns per customer
+
+**Access the Portal:**
+```bash
+# Start SMS Portal server
+cd sms_portal
+python server.py
+
+# Access dashboard at http://localhost:8080
 ```
+
+**Complete Documentation**: See [sms_portal/README.md](sms_portal/README.md)
 
 **SMS Templates:**
 ```python
