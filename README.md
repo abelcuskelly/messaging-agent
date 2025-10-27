@@ -68,11 +68,6 @@ export ENDPOINT_ID=your-endpoint-id
 
 ## 📚 Documentation
 
-### Setup & Deployment
-- **[Easy Setup Guide](EASY_SETUP.md)** - Get started with cloud APIs
-- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment
-- **[Deploy Now](DEPLOY_NOW.md)** - Quickest path to production
-
 ### Components
 
 #### Core System
@@ -98,11 +93,20 @@ export ENDPOINT_ID=your-endpoint-id
 - **[Jupyter Notebooks](notebooks/README.md)** - Interactive development
 - **[Evaluation System](evals/README.md)** - Model evaluation and grading
 - **[Widget & SDK](widget/README.md)** - Embeddable chat widget
+- **[Monitoring & Logging](monitoring/README.md)** - Vertex monitoring and BigQuery
 
-### Support
+### Guides & Setup
+- **[Easy Setup](EASY_SETUP.md)** - Get started with cloud APIs
+- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment
+- **[Deploy Now](DEPLOY_NOW.md)** - Quick deployment
+- **[LangGraph Upgrade](LANGGRAPH_UPGRADE_GUIDE.md)** - Upgrade to LangGraph
+- **[Demo Scripts](DEMO_EXAMPLE.md)** - Product demonstration examples
+
+### Support & Security
 - **[Security Guide](SECURITY.md)** - Security best practices
 - **[API Key Setup](API_KEY_SETUP.md)** - Secure API key management
 - **[Evaluation Setup](EVAL_SETUP.md)** - Model evaluation configuration
+- **[Twilio Setup](TWILIO_SETUP.md)** - SMS integration setup
 
 ## 🎯 Getting Started
 
