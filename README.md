@@ -6,13 +6,13 @@
 
 ## 🎯 Choose Your Setup
 
-### **Easy Setup** (5 minutes, Managed Infrastructure)
-Get started instantly with cloud APIs:
-- ✅ **Anthropic Claude** - Best reasoning and safety (managed API)
-- ✅ **OpenAI GPT** - Most compatible and widely used (managed API)
-- ✅ **AWS Bedrock** - Multiple models via AWS (managed infrastructure)
+### **Easy Setup** (5 minutes, Choose ONE Provider)
+Get started instantly with cloud APIs (pick the provider you want):
+- ✅ **Anthropic Claude** - Best reasoning and safety (Anthropic's infrastructure)
+- ✅ **OpenAI GPT** - Most compatible and widely used (OpenAI's infrastructure)  
+- ✅ **AWS Bedrock** - Multiple models via AWS (AWS infrastructure)
 
-**Note**: Bedrock uses AWS infrastructure, but requires zero setup - just credentials!
+**How it works**: You choose ONE provider at a time. Each uses their own managed infrastructure. The messaging agent accesses whichever provider you configure.
 
 👉 **[See Easy Setup Guide →](EASY_SETUP.md)**
 

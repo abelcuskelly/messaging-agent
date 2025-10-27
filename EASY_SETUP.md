@@ -241,18 +241,24 @@ AWS_REGION=us-east-1
 | Feature | Easy Setup | Advanced Setup (Qwen + Vertex) |
 |---------|------------|--------------------------------|
 | **Setup Time** | 5 minutes | 30+ minutes |
-| **Infrastructure** | Managed APIs (OpenAI/Anthropic) or AWS (Bedrock) | Google Cloud Vertex AI |
+| **Infrastructure** | You choose ONE: OpenAI API, Anthropic API, or AWS Bedrock | Google Cloud Vertex AI |
 | **Model Training** | No | Yes (LoRA) |
 | **Customization** | Limited | Full control |
 | **Cost at Scale** | $0.50-15/M tokens | $0.01-0.50/M tokens |
 | **Best For** | Quick start | Production at scale |
-| **Providers** | Anthropic, OpenAI, Bedrock | Qwen (custom) |
+| **Providers** | Choose one: Anthropic OR OpenAI OR Bedrock | Qwen (custom) |
 
-**Note**: While Bedrock runs on AWS infrastructure, it's still considered "Easy Setup" because:
+**Important**: You select ONE provider at a time:
+- **Anthropic** = Uses Anthropic's managed API (their infrastructure)
+- **OpenAI** = Uses OpenAI's managed API (their infrastructure)
+- **Bedrock** = Uses AWS's managed Bedrock service (AWS infrastructure)
+
+**Easy Setup means**:
 - ✅ No custom model training required
-- ✅ Uses existing pre-trained models
-- ✅ AWS managed infrastructure (no setup needed)
+- ✅ Uses pre-trained models from chosen provider
+- ✅ Provider manages the infrastructure for you
 - ✅ Simple API access via credentials
+- ✅ Switch providers anytime if needed
 
 ---
 
