@@ -4,6 +4,26 @@
 > 
 > Enterprise-grade conversational AI for ticketing and customer support, powered by Qwen3-4B on Google Cloud Vertex AI. Features automatic performance optimizations, multi-agent orchestration capabilities, and comprehensive monitoring.
 
+## 🎯 Choose Your Setup
+
+### **Easy Setup** (5 minutes, No Infrastructure)
+Get started instantly with cloud APIs:
+- ✅ **Anthropic Claude** - Best reasoning and safety
+- ✅ **OpenAI GPT** - Most compatible and widely used
+- ✅ **AWS Bedrock** - Multiple models via AWS
+
+👉 **[See Easy Setup Guide →](EASY_SETUP.md)**
+
+### **Advanced Setup** (Full Control, Custom Training)
+Train and deploy your own Qwen model:
+- ✅ **Google Cloud Vertex AI** - Enterprise infrastructure
+- ✅ **LoRA Fine-Tuning** - Train custom models
+- ✅ **Qwen3-4B** - Full model control
+
+👉 **[See Setup Below ↓](#quick-start)**
+
+**New to AI?** Start with [Easy Setup](EASY_SETUP.md) - it's faster and simpler!
+
 ## 🎯 What's New: Performance Optimizations Now Active
 
 **Your messaging agent is now equipped with enterprise-grade optimizations that deliver:**
