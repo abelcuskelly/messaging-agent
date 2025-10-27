@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Demo - Rationa</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .demo-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .demo-header h1 {
+            font-size: 48px;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+        
+        .demo-header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .demo-scenario {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .demo-scenario:hover {
+            transform: translateY(-5px);
+        }
+        
+        .demo-scenario h3 {
+            color: #667eea;
+            margin: 0 0 15px 0;
+            font-size: 24px;
+        }
+        
+        .demo-scenario p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .scenario-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        
+        .scenario-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .chat-interface {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .chat-interface.active {
+            display: block;
+        }
+        
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .chat-header h3 {
+            color: #667eea;
+            margin: 0;
+        }
+        
+        .close-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .chat-messages {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message.agent {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .message.agent::before {
+            content: "🤖 ";
+        }
+        
+        .message.user::before {
+            content: "👤 ";
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .chat-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .chat-input button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .features-showcase {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .features-showcase h2 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature-item {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .feature-item .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .feature-item h4 {
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .feature-item p {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>🚀 AI Agent Live Demo</h1>
+            <p>Experience Rationa's AI Messaging Agent in Action</p>
+        </div>
+        
+        <div class="demo-grid">
+            <div class="demo-scenario">
+                <h3>📱 Simple Ticket Purchase</h3>
+                <p>Watch our AI agent help a customer purchase tickets for a Lakers game. The agent checks availability, compares prices, and processes the order.</p>
+                <button class="scenario-btn" onclick="startScenario(1)">Try This Scenario</button>
+            </div>
+            
+            <div class="demo-scenario">
+                <h3>🎫 Seat Upgrade Service</h3>
+                <p>See how the AI agent intelligently suggests seat upgrades by analyzing the customer's current tickets and event preferences.</p>
+                <button class="scenario-btn" onclick="startScenario(2)">Try This Scenario</button>
+            </div>
+            
+            <div class="demo-scenario">
+                <h3>🔄 Purchase + Upgrade</h3>
+                <p>Experience a complex multi-step interaction where the agent purchases tickets and immediately suggests optimal upgrade options.</p>
+                <button class="scenario-btn" onclick="startScenario(3)">Try This Scenario</button>
+            </div>
+            
+            <div class="demo-scenario">
+                <h3>❓ General Inquiry</h3>
+                <p>Ask the AI agent anything about events, venues, parking, policies, or general information. Natural conversation with context awareness.</p>
+                <button class="scenario-btn" onclick="startScenario(4)">Try This Scenario</button>
+            </div>
+        </div>
+        
+        <div class="chat-interface" id="chatInterface">
+            <div class="chat-header">
+                <h3 id="scenarioTitle">AI Agent Demo</h3>
+                <button class="close-btn" onclick="closeChat()">Close Demo</button>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        
+        <div class="features-showcase">
+            <h2>✨ Agent Capabilities</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="icon">⚡</div>
+                    <h4>Fast Responses</h4>
+                    <p>5-20ms cached, 100-500ms uncached</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🎯</div>
+                    <h4>Context Aware</h4>
+                    <p>Remembers conversation history</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🔧</div>
+                    <h4>Tool Integration</h4>
+                    <p>Real-time inventory checks</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">📊</div>
+                    <h4>Multi-Channel</h4>
+                    <p>SMS, Web, Social Media</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">💳</div>
+                    <h4>Payments</h4>
+                    <p>Stripe integration ready</p>
+                </div>
+                <div class="feature-item">
+                    <div class="icon">🌟</div>
+                    <h4>99.9% Uptime</h4>
+                    <p>Enterprise reliability</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const scenarios = {
+            1: {
+                title: "Simple Ticket Purchase",
+                messages: [
+                    {role: "agent", text: "Hi! I can help you find tickets for the Lakers game. What section are you interested in?"},
+                    {role: "user", text: "I'm looking for seats in section 120"},
+                    {role: "agent", text: "Great! I found seats in Section 120. There are 2 seats available at $185 each. Would you like to proceed with the purchase?"},
+                    {role: "user", text: "Yes, let's buy them"},
+                    {role: "agent", text: "Perfect! I'm processing your order now. Once completed, you'll receive a confirmation email with your tickets. Total: $370 (plus fees). Payment processing..."}
+                ]
+            },
+            2: {
+                title: "Seat Upgrade Service",
+                messages: [
+                    {role: "agent", text: "I see you have tickets for the Warriors game in Section 314. Would you like to explore seat upgrade options?"},
+                    {role: "user", text: "What upgrade options do I have?"},
+                    {role: "agent", text: "I can upgrade you to Section 115 (lower level) for an additional $125 per ticket, or Section 205 (club level) for $85 per ticket. Which would you prefer?"},
+                    {role: "user", text: "Section 115 sounds good"},
+                    {role: "agent", text: "Excellent choice! I'm processing your upgrade to Section 115. You'll save an estimated $85 vs buying new tickets upfront!"}
+                ]
+            },
+            3: {
+                title: "Purchase + Upgrade",
+                messages: [
+                    {role: "agent", text: "Welcome! I can help you with Lakers tickets today. What are you looking for?"},
+                    {role: "user", text: "I need 4 tickets for next Wednesday's game"},
+                    {role: "agent", text: "I found 4 seats together in Section 215 at $95 each. Would you like to purchase them?"},
+                    {role: "user", text: "Yes please"},
+                    {role: "agent", text: "Purchasing your tickets... ✅ Done! Now, I noticed you could upgrade to Section 117 (lower level) for just $90 more per ticket. Interested?"},
+                    {role: "user", text: "That's a great deal! Yes, let's upgrade"},
+                    {role: "agent", text: "Perfect! Upgrading your tickets now... ✅ All set! You now have 4 tickets in Section 117. Total upgrade cost: $360. You'll receive updated tickets via email shortly."}
+                ]
+            },
+            4: {
+                title: "General Inquiry",
+                messages: [
+                    {role: "agent", text: "Hello! How can I help you today?"},
+                    {role: "user", text: "What's the parking situation at Chase Center?"},
+                    {role: "agent", text: "Chase Center has several parking options: Main Parking Garage ($50), Surface lots ($35-45), and street parking (metered). I can help you purchase parking in advance - interested?"},
+                    {role: "user", text: "Yes, show me options"},
+                    {role: "agent", text: "I found Main Garage parking available at $50. Alternative: Lot A at $35 (7 min walk). Which would you prefer?"},
+                    {role: "user", text: "Main garage please"},
+                    {role: "agent", text: "Booking your parking now... ✅ Confirmed! Your parking pass will be sent via email. Any other questions?"}
+                ]
+            }
+        };
+        
+        function startScenario(scenarioNum) {
+            const scenario = scenarios[scenarioNum];
+            const chatInterface = document.getElementById('chatInterface');
+            const scenarioTitle = document.getElementById('scenarioTitle');
+            const chatMessages = document.getElementById('chatMessages');
+            
+            scenarioTitle.textContent = scenario.title;
+            chatMessages.innerHTML = '';
+            chatInterface.classList.add('active');
+            
+            // Auto-populate messages with slight delay for realism
+            scenario.messages.forEach((msg, index) => {
+                setTimeout(() => {
+                    addMessage(msg.role, msg.text);
+                }, index * 1500);
+            });
+        }
+        
+        function addMessage(role, text) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addMessage('user', message);
+                input.value = '';
+                
+                // Auto-respond (in real implementation, this would be API call)
+                setTimeout(() => {
+                    addMessage('agent', "Thanks for your message! In a live system, I'd connect you to the real AI agent. Try the pre-configured scenarios above to see the full agent capabilities.");
+                }, 500);
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function closeChat() {
+            document.getElementById('chatInterface').classList.remove('active');
+        }
+        
+        // Close demo with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeChat();
+            }
+        });
+    </script>
+</body>
+</html>
